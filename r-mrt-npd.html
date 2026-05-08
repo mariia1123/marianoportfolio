@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>MRT — Conjoint Analysis for NPD — Mariano Cánovas</title>
+<meta name="description" content="Group project · RStudio · Conjoint analysis for autonomous taxi service">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f3; --bg-2: #ebebe8; --surface: #ffffff; --surface-tint: #f0f0ed;
+    --ink: #0a0a0a; --muted: #5a5a58; --dim: #8e8e8c; --border: #e2e2df;
+    --accent: #276DC3;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  body.dark-mode {
+    --bg: #0d0d0d; --bg-2: #161616; --surface: #1a1a1a; --surface-tint: #222222;
+    --ink: #f5f5f3; --muted: #a0a0a0; --dim: #666666; --border: #2a2a2a;
+  }
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #fff; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans); background: var(--bg); color: var(--ink);
+    margin: 0; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s; min-height: 100vh;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  #top-controls { position: fixed; top: 20px; right: 24px; z-index: 100; display: flex; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  .nav-bar { max-width: 800px; margin: 0 auto; padding: 28px 24px 0; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none; color: var(--muted);
+    font-family: var(--sans); font-size: 13px; font-weight: 500;
+    padding: 8px 14px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover { color: var(--ink); border-color: var(--ink); transform: translateX(-3px); }
+
+  .page-header {
+    max-width: 800px; margin: 0 auto; padding: 50px 24px 30px;
+    display: flex; align-items: center; gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .lang-badge {
+    width: 56px; height: 56px; border-radius: 14px;
+    color: white; font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1); flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(24px, 4vw, 32px); font-weight: 700;
+    margin: 0 0 4px; letter-spacing: -0.02em;
+  }
+  .page-title p { font-size: 14px; color: var(--muted); margin: 0; }
+
+  .content { max-width: 800px; margin: 0 auto; padding: 0 24px 100px; }
+
+  .meta-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 36px; }
+  .pill {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--ink); border-radius: 999px;
+    padding: 6px 14px; font-size: 12px; font-weight: 500;
+    font-family: var(--mono); letter-spacing: 0.02em;
+  }
+  .pill.accent { background: #276DC3; color: white; border-color: #276DC3; }
+
+  .key-section { margin: 28px 0; }
+  .key-section h2 {
+    font-size: 16px; font-weight: 600; color: var(--muted);
+    margin: 0 0 14px; font-family: var(--mono);
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .key-section p { font-size: 15px; color: var(--ink); line-height: 1.7; margin: 0 0 12px; }
+  .key-section ul { padding-left: 20px; margin: 8px 0; }
+  .key-section li { font-size: 14px; line-height: 1.7; margin-bottom: 6px; color: var(--ink); }
+  .key-section strong { font-weight: 600; }
+  .key-section code {
+    font-family: var(--mono); font-size: 0.92em;
+    background: var(--surface-tint); padding: 1px 6px;
+    border-radius: 4px; border: 1px solid var(--border);
+  }
+
+  .highlight {
+    background: linear-gradient(135deg, rgba(39,109,195,0.08), rgba(39,109,195,0.02));
+    border-left: 3px solid #276DC3;
+    border-radius: 8px;
+    padding: 14px 18px; margin: 16px 0;
+    font-size: 14px; line-height: 1.6;
+  }
+  body.dark-mode .highlight {
+    background: linear-gradient(135deg, rgba(39,109,195,0.15), rgba(39,109,195,0.04));
+  }
+
+  /* Importance weights table */
+  .imp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 16px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .imp-table th, .imp-table td {
+    padding: 11px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .imp-table tbody tr:last-child td { border-bottom: none; }
+  .imp-table th {
+    background: var(--surface-tint);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .imp-table td.num {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-align: right;
+  }
+  .imp-table td.bar-cell { width: 35%; vertical-align: middle; }
+  .imp-bar {
+    height: 8px; background: var(--surface-tint);
+    border-radius: 999px; overflow: hidden;
+  }
+  .imp-bar-fill {
+    height: 100%; background: linear-gradient(90deg, #276DC3, #4f93e8);
+    border-radius: 999px;
+  }
+
+  footer {
+    max-width: 800px; margin: 0 auto; padding: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 600px) {
+    .page-header { padding: 35px 20px 25px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 22px; }
+    .nav-bar { padding: 20px 20px 0; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .imp-table th, .imp-table td { padding: 9px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<nav class="nav-bar">
+  <a href="r.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to RStudio projects
+  </a>
+</nav>
+
+<header class="page-header">
+  <div class="lang-badge" style="background:linear-gradient(135deg,#ec4899,#9d174d);">🚕</div>
+  <div class="page-title">
+    <h1>MRT — Conjoint Analysis for NPD</h1>
+    <p>Group project · RStudio · Autonomous taxi service · March 2023</p>
+  </div>
+</header>
+
+<main class="content">
+
+  <div class="meta-pills"><span class="pill accent">Group of 3</span><span class="pill">Conjoint analysis</span><span class="pill">Linear regression</span><span class="pill">Robocab case</span></div>
+
+  <div class="key-section">
+    <h2>Goal</h2>
+    <p>Help <strong>Robocab</strong>, an autonomous self-driving taxi service, design a winning product by figuring out which service attributes matter most to potential customers — and by how much. The analysis combined LRB Chapter 6 theory on new product development with a hands-on conjoint study in R.</p>
+  </div>
+
+  <div class="key-section">
+    <h2>Setup</h2>
+    <p>Five service attributes were tested, each with three levels:</p>
+    <ul>
+      <li><strong>Service Provider:</strong> City service / Uber / Robocab</li>
+      <li><strong>Car Brand:</strong> Google / Toyota / Tesla</li>
+      <li><strong>Waiting time:</strong> 0 / 3 / 5 minutes</li>
+      <li><strong>Driving time:</strong> 15 / 20 / 25 minutes</li>
+      <li><strong>Price:</strong> €10 / €15 / €20</li>
+    </ul>
+    <p>A full factorial would have meant 3⁵ = 243 alternatives, so we used a <strong>fractional factorial design</strong> showing each respondent 16 random product bundles to rate from 0 to 10. We then ran a rating-based conjoint analysis using OLS regression.</p>
+  </div>
+
+  <div class="key-section">
+    <h2>Regression results</h2>
+    <p>The model was highly significant overall (<code>F = 85.52</code>, <code>p &lt; 2.2e-16</code>) with an adjusted R² of <strong>0.176</strong> — modest in absolute terms but reasonable for survey-based behavioural data. Seven of the ten dummy levels came back significant: Provider_Robocab, both Waiting levels, both Driving levels, and both Price levels.</p>
+  </div>
+
+  <div class="key-section">
+    <h2>Importance weights</h2>
+    <p>Computing the range of part-worths for each attribute and dividing by the total range gave the importance weights:</p>
+
+    <table class="imp-table">
+      <thead>
+        <tr><th>Attribute</th><th>Range</th><th class="bar-cell">Importance</th><th class="num">%</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Price</strong></td>
+          <td class="num">2.965</td>
+          <td class="bar-cell"><div class="imp-bar"><div class="imp-bar-fill" style="width:100%;"></div></div></td>
+          <td class="num">52.0%</td>
+        </tr>
+        <tr>
+          <td>Driving time</td>
+          <td class="num">1.464</td>
+          <td class="bar-cell"><div class="imp-bar"><div class="imp-bar-fill" style="width:49.4%;"></div></div></td>
+          <td class="num">25.7%</td>
+        </tr>
+        <tr>
+          <td>Waiting time</td>
+          <td class="num">0.764</td>
+          <td class="bar-cell"><div class="imp-bar"><div class="imp-bar-fill" style="width:25.8%;"></div></div></td>
+          <td class="num">13.4%</td>
+        </tr>
+        <tr>
+          <td>Service provider</td>
+          <td class="num">0.333</td>
+          <td class="bar-cell"><div class="imp-bar"><div class="imp-bar-fill" style="width:11.2%;"></div></div></td>
+          <td class="num">5.8%</td>
+        </tr>
+        <tr>
+          <td>Car brand</td>
+          <td class="num">0.173</td>
+          <td class="bar-cell"><div class="imp-bar"><div class="imp-bar-fill" style="width:5.8%;"></div></div></td>
+          <td class="num">3.0%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight"><strong>Price drives over half of the decision.</strong> Combined with driving time, the two practical attributes account for ~78% of customer preference — branding barely moves the needle.</div>
+  </div>
+
+  <div class="key-section">
+    <h2>Price simulation</h2>
+    <p>Predicting preference ratings for a Robocab + Google car + 3-min wait + 15-min drive bundle at three price points:</p>
+    <ul>
+      <li><strong>€10:</strong> rating 7.73 → ~61% share of preference</li>
+      <li><strong>€15:</strong> rating 6.81 → ~58% share</li>
+      <li><strong>€20:</strong> rating 5.85 → ~54% share</li>
+    </ul>
+  </div>
+
+  <div class="key-section">
+    <h2>Recommendations to Robocab</h2>
+    <ul>
+      <li>Compete on <strong>price</strong>, not on car brand — customers don't care whether it's a Tesla or a Toyota nearly as much as marketing might suggest</li>
+      <li>Minimise <strong>waiting time</strong> — going from 5 to 0 minutes is worth nearly half a rating point on its own</li>
+      <li>Reframe attribute level 2 ("3 min wait") to something more realistic like 5–10 minutes for a future study; the original gap was too narrow</li>
+      <li>Add a "style/design" attribute in future research to test whether premium interiors justify a price premium</li>
+    </ul>
+  </div>
+
+  <div class="key-section">
+    <h2>My role</h2>
+    <p>Group of three with Michael and Antonio. I worked on the regression analysis, importance-weight calculations, and the price-simulation interpretation.</p>
+  </div>
+
+</main>
+
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display  = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+</script>
+
+</body>
+</html>
