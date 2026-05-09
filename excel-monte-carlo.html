@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Monte Carlo Simulations: Supply Chain Models — Excel Project — Mariano Cánovas</title>
+<meta name="description" content="Stochastic simulations of EOQ and newsvendor models using Excel and Python. Analyzes ordering costs, demand uncertainty, and profit optimization across 78,766 iterations.">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --bg-2: #ebebe8;
+    --surface: #ffffff;
+    --surface-tint: #f0f0ed;
+    --ink: #0a0a0a;
+    --muted: #5a5a58;
+    --dim: #8e8e8c;
+    --border: #e2e2df;
+    --accent: #107C41;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  body.dark-mode {
+    --bg: #0d0d0d;
+    --bg-2: #161616;
+    --surface: #1a1a1a;
+    --surface-tint: #222222;
+    --ink: #f5f5f3;
+    --muted: #a0a0a0;
+    --dim: #666666;
+    --border: #2a2a2a;
+  }
+
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #ffffff; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s;
+    min-height: 100vh;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  #top-controls {
+    position: fixed; top: 20px; right: 24px; z-index: 100;
+    display: flex; gap: 8px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  .nav-bar {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px; font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    transform: translateX(-3px);
+  }
+
+  .page-header {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 60px 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .lang-badge {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: #107C41;
+    color: white;
+    font-family: var(--mono);
+    font-size: 20px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(16,124,65,0.25);
+    flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .page-title p {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+  }
+
+  .study-section {
+    margin: 36px 0;
+  }
+  .study-section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    letter-spacing: -0.01em;
+  }
+  .study-section h2 .num {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 10px;
+  }
+  .study-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0 12px;
+    color: var(--ink);
+  }
+  .study-section p {
+    margin: 16px 0;
+    line-height: 1.7;
+  }
+  .study-section ul {
+    margin: 16px 0;
+    padding-left: 24px;
+  }
+  .study-section li {
+    margin: 8px 0;
+    line-height: 1.6;
+  }
+
+  .highlight {
+    background: var(--surface-tint);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .metric-card {
+    background: var(--surface-tint);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric-card .label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .metric-card .value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--mono);
+  }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+  .comparison-table thead {
+    border-bottom: 2px solid var(--border);
+    background: var(--surface-tint);
+  }
+  .comparison-table th {
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .comparison-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .comparison-table tbody tr:hover {
+    background: var(--surface-tint);
+  }
+
+  .pdf-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+  }
+  .pdf-overlay.active { display: flex; align-items: center; justify-content: center; }
+  .pdf-modal {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 900px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .pdf-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pdf-modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .pdf-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pdf-close:hover { color: var(--ink); }
+  #pdf-viewer, #excel-viewer {
+    flex: 1;
+    border: none;
+  }
+
+  footer {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 600px) {
+    .page-header { padding: 40px 20px 30px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 18px; }
+    .nav-bar { padding: 20px 20px 0; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .content { padding: 0 20px 80px; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<nav class="nav-bar">
+  <a href="excel.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to projects
+  </a>
+</nav>
+
+<header class="page-header">
+  <div class="lang-badge">🎲</div>
+  <div class="page-title">
+    <h1>Monte Carlo Simulations</h1>
+    <p>Stochastic modeling of supply chain optimization</p>
+  </div>
+</header>
+
+<main class="content">
+
+  <section class="study-section">
+    <h2><span class="num">1</span>Overview</h2>
+    <p>Two stochastic simulations exploring uncertainty in supply chain decisions using the Economic Order Quantity (EOQ) and Newsvendor models. Both simulations implemented in Excel and Python with sample sizes of 787 (Excel) and 78,766 (Python), demonstrating how larger samples reduce variance and stabilize estimates.</p>
+    
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="label">EOQ Avg Cost</div>
+        <div class="value">€3,249</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Newsvendor Profit</div>
+        <div class="value">€790</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Service Level</div>
+        <div class="value">93%</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Samples (Colab)</div>
+        <div class="value">78,766</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">2</span>Simulation 1: EOQ with random ordering costs</h2>
+    <p>The Economic Order Quantity model determines optimal order size to minimize total costs. In this simulation, the fixed ordering cost <strong>K</strong> is randomized using a normal distribution (μ=240, σ=40), while demand and holding costs remain constant.</p>
+
+    <div class="highlight">
+      <strong>Key Finding:</strong> Larger samples dramatically reduce variance. Standard deviation decreased from <strong>€513.81</strong> (N=787) to <strong>€271.07</strong> (N=78,766) — a 47% reduction — demonstrating the law of large numbers in action.
+    </div>
+
+    <p><strong>Parameters:</strong> Demand = 1,100 units, Mean ordering cost = €240 (σ=40), Holding cost = €20.</p>
+
+    <p>Results show costs cluster between €2,653–€5,800, with most simulations landing in the €3,574–€3,764 range. The histogram reveals a near-normal distribution, confirming the propagation of ordering cost uncertainty through the EOQ formula.</p>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">3</span>Simulation 2: Newsvendor with demand uncertainty</h2>
+    <p>The Newsvendor model optimizes order quantity <strong>Q*</strong> when demand is uncertain. The critical ratio determines the ideal balance between stockouts and leftovers. Here, demand follows a normal distribution (μ=300, σ=40) while price (€9), cost (€6), and salvage value (€2) are fixed.</p>
+
+    <div class="highlight">
+      <strong>Key Finding:</strong> Expected profit stabilizes around <strong>€790</strong> across both implementations, with <strong>93% service level</strong> achieved in the larger sample. This means demand is met 93% of the time without stockouts.
+    </div>
+
+    <p><strong>Order quantity Q* = 292.80 units.</strong> On average, ~280 units sell, ~13 remain as leftovers. The profit histogram is right-skewed, indicating frequent scenarios where demand exceeds supply, concentrating profits in the €850–€930 range.</p>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">4</span>Excel vs Python comparison</h2>
+    <p>Both implementations were coded and executed independently:</p>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Excel (N=787)</th>
+          <th>Python (N=78,766)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>EOQ Avg Cost</strong></td>
+          <td>€3,829.40</td>
+          <td>€3,249.78</td>
+        </tr>
+        <tr>
+          <td><strong>EOQ Std Dev</strong></td>
+          <td>€513.81</td>
+          <td>€271.07</td>
+        </tr>
+        <tr>
+          <td><strong>Newsvendor Profit</strong></td>
+          <td>€790 (avg)</td>
+          <td>€789.95</td>
+        </tr>
+        <tr>
+          <td><strong>Service Level</strong></td>
+          <td>38–47%</td>
+          <td>93.39%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Findings:</strong> Expected profits are nearly identical (€1 difference), confirming both implementations are correct. Histograms show similar shapes, right-skewed with demand met in most scenarios. The service level discrepancy likely stems from sample size—larger samples provide more reliable estimates. Colab notebook: <a href="https://colab.research.google.com/drive/169wq74xHi5GNifHY3Oo7gjx7EMQcbu5F?usp=sharing" style="color: var(--accent); text-decoration: none;">View Python code</a></p>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">5</span>View files</h2>
+    <p>Explore the Excel models and full analysis:</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 20px 0;">
+      <button onclick="openExcel()" style="padding: 14px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; font-family: var(--sans); font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 14px;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        📊 View Excel Models
+      </button>
+      <button onclick="openPDF()" style="padding: 14px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; font-family: var(--sans); font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 14px;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        📄 View PDF Report
+      </button>
+    </div>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">6</span>Conclusion</h2>
+    <p>Monte Carlo simulations reveal how uncertainty propagates through supply chain models. The EOQ model's total cost is sensitive to ordering cost variability, while the Newsvendor model's profits hinge on the demand forecast's accuracy. Larger samples (78,766 vs 787) reduce estimation variance by ~50%, enabling more confident decision-making in practice. Both models demonstrate that stochastic optimization is essential when parameters are uncertain.</p>
+  </section>
+
+</main>
+
+<!-- Excel Modal -->
+<div id="excel-overlay" class="pdf-overlay">
+  <div class="pdf-modal">
+    <div class="pdf-modal-header">
+      <h3 class="pdf-modal-title">Monte Carlo Simulations — Excel Models</h3>
+      <button class="pdf-close" onclick="closeExcel()">&times;</button>
+    </div>
+    <iframe id="excel-viewer" src="https://docs.google.com/spreadsheets/d/1cHhUdc2BEY4coPqfBrdiZC_oDEEUm4V1/edit?usp=sharing"></iframe>
+  </div>
+</div>
+
+<!-- PDF Modal -->
+<div id="pdf-overlay" class="pdf-overlay">
+  <div class="pdf-modal">
+    <div class="pdf-modal-header">
+      <h3 class="pdf-modal-title">Monte Carlo Simulations — Full Report</h3>
+      <button class="pdf-close" onclick="closePDF()">&times;</button>
+    </div>
+    <iframe id="pdf-viewer" src="https://drive.google.com/file/d/1VdiSrXQHYexusdJ5y2ue-Fm-ldgdlJpC/preview" allow="autoplay"></iframe>
+  </div>
+</div>
+
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+
+function openExcel() {
+  document.getElementById('excel-overlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeExcel() {
+  document.getElementById('excel-overlay').classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+function openPDF() {
+  document.getElementById('pdf-overlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePDF() {
+  document.getElementById('pdf-overlay').classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const excelOverlay = document.getElementById('excel-overlay');
+  const pdfOverlay = document.getElementById('pdf-overlay');
+  
+  if (excelOverlay) {
+    excelOverlay.addEventListener('click', function(e) {
+      if (e.target === excelOverlay) {
+        closeExcel();
+      }
+    });
+  }
+  
+  if (pdfOverlay) {
+    pdfOverlay.addEventListener('click', function(e) {
+      if (e.target === pdfOverlay) {
+        closePDF();
+      }
+    });
+  }
+  
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeExcel();
+      closePDF();
+    }
+  });
+});
+</script>
+
+</body>
+</html>
