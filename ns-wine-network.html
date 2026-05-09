@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Mapping the World of Wine — Network Analysis — Mariano Cánovas</title>
+<meta name="description" content="Solo project · Python · Network analysis of wine reviews and regional patterns">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f3; --bg-2: #ebebe8; --surface: #ffffff; --surface-tint: #f0f0ed;
+    --ink: #0a0a0a; --muted: #5a5a58; --dim: #8e8e8c; --border: #e2e2df;
+    --accent: #276DC3;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  body.dark-mode {
+    --bg: #0d0d0d; --bg-2: #161616; --surface: #1a1a1a; --surface-tint: #222222;
+    --ink: #f5f5f3; --muted: #a0a0a0; --dim: #666666; --border: #2a2a2a;
+  }
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #fff; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans); background: var(--bg); color: var(--ink);
+    margin: 0; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s; min-height: 100vh;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  #top-controls { position: fixed; top: 20px; right: 24px; z-index: 100; display: flex; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  .nav-bar { max-width: 800px; margin: 0 auto; padding: 28px 24px 0; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none; color: var(--muted);
+    font-family: var(--sans); font-size: 13px; font-weight: 500;
+    padding: 8px 14px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover { color: var(--ink); border-color: var(--ink); transform: translateX(-3px); }
+
+  .page-header {
+    max-width: 800px; margin: 0 auto; padding: 50px 24px 30px;
+    display: flex; align-items: center; gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .lang-badge {
+    width: 56px; height: 56px; border-radius: 14px;
+    color: white; font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1); flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(24px, 4vw, 32px); font-weight: 700;
+    margin: 0 0 4px; letter-spacing: -0.02em;
+  }
+  .page-title p { font-size: 14px; color: var(--muted); margin: 0; }
+
+  .content { max-width: 800px; margin: 0 auto; padding: 0 24px 100px; }
+
+  .meta-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 36px; }
+  .pill {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--ink); border-radius: 999px;
+    padding: 6px 14px; font-size: 12px; font-weight: 500;
+    font-family: var(--mono); letter-spacing: 0.02em;
+  }
+  .pill.accent { background: #276DC3; color: white; border-color: #276DC3; }
+
+  .key-section { margin: 28px 0; }
+  .key-section h2 {
+    font-size: 16px; font-weight: 600; color: var(--muted);
+    margin: 0 0 14px; font-family: var(--mono);
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .key-section p { font-size: 15px; color: var(--ink); line-height: 1.7; margin: 0 0 12px; }
+  .key-section ul { padding-left: 20px; margin: 8px 0; }
+  .key-section li { font-size: 14px; line-height: 1.7; margin-bottom: 6px; color: var(--ink); }
+  .key-section strong { font-weight: 600; }
+
+  .highlight {
+    background: linear-gradient(135deg, rgba(39,109,195,0.08), rgba(39,109,195,0.02));
+    border-left: 3px solid #276DC3;
+    border-radius: 8px;
+    padding: 14px 18px; margin: 16px 0;
+    font-size: 14px; line-height: 1.6;
+  }
+  body.dark-mode .highlight {
+    background: linear-gradient(135deg, rgba(39,109,195,0.15), rgba(39,109,195,0.04));
+  }
+
+  .viz-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin: 20px 0;
+  }
+  .viz-section h3 {
+    font-size: 15px; font-weight: 600; margin: 0 0 12px;
+    color: var(--accent);
+  }
+  .viz-description {
+    font-size: 14px; color: var(--ink); line-height: 1.6; margin-bottom: 12px;
+  }
+  .metric-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0;
+  }
+  .metric-item {
+    background: var(--surface-tint); padding: 10px; border-radius: 8px;
+    font-size: 13px; font-family: var(--mono);
+  }
+  .metric-item strong { color: var(--accent); }
+
+  .value-box {
+    background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.02));
+    border-left: 3px solid #22c55e;
+    border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+    font-size: 14px;
+  }
+
+  footer {
+    max-width: 800px; margin: 0 auto; padding: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 600px) {
+    .page-header { padding: 35px 20px 25px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 22px; }
+    .nav-bar { padding: 20px 20px 0; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .metric-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<nav class="nav-bar">
+  <a href="r.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to RStudio projects
+  </a>
+</nav>
+
+<header class="page-header">
+  <div class="lang-badge" style="background:linear-gradient(135deg,#a855f7,#7e22ce);">🍷</div>
+  <div class="page-title">
+    <h1>Mapping the World of Wine</h1>
+    <p>Solo project · Python · Network analysis of wine reviews · April 2025</p>
+  </div>
+</header>
+
+<main class="content">
+
+  <div class="meta-pills"><span class="pill accent">Solo</span><span class="pill">Network analysis</span><span class="pill">Python</span><span class="pill">PageRank</span><span class="pill">Centrality</span></div>
+
+  <div class="key-section">
+    <h2>Goal</h2>
+    <p>Explore the global wine industry through network analysis, mapping relationships between wine-producing countries, grape varieties, regions, and critics. Using WineEnthusiast review data, I constructed multiple network visualizations to uncover hidden patterns: which countries dominate production, which varieties are most versatile, and which wines offer exceptional value.</p>
+  </div>
+
+  <div class="key-section">
+    <h2>Context</h2>
+    <p>Networks and Simulations course (EBC2184) at Erasmus University Rotterdam, coordinated by Dr. Leto Peel. The project applied network science concepts (PageRank, betweenness centrality, node connectivity) to a real-world wine dataset, revealing how the wine world functions as an interconnected system of producers, varieties, regions, and critics.</p>
+  </div>
+
+  <div class="key-section">
+    <h2>Dataset & Methodology</h2>
+    <ul>
+      <li><strong>Source:</strong> WineEnthusiast reviews dataset (from Kaggle, 2017)</li>
+      <li><strong>Scope:</strong> First 1,000 rows filtered to European wines only—avoided random sampling bias and geographic skew</li>
+      <li><strong>Cleaning:</strong> Removed missing values; focused on wines with complete country, variety, region, price, and rating data</li>
+      <li><strong>Tools:</strong> Python with NetworkX, Pandas, and ggplot2 for network construction and visualization</li>
+    </ul>
+  </div>
+
+  <div class="viz-section">
+    <h3>Network 1: Country-Variety Network</h3>
+    <div class="viz-description">
+      A bipartite network linking wine-producing countries to the grape varieties they grow. Countries appear as dark red nodes, varieties as green nodes. Edge thickness represents the strength of association (number of reviews).
+    </div>
+    <div class="metric-row">
+      <div class="metric-item"><strong>Top Countries (PageRank):</strong><br>Italy: 0.1651<br>France: 0.1540<br>Portugal: 0.0587</div>
+      <div class="metric-item"><strong>Top Varieties (PageRank):</strong><br>Red Blend: 0.0521<br>Riesling: 0.0488<br>White Blend: 0.0476</div>
+    </div>
+    <p><strong>Key Finding:</strong> Italy and France are the dominant hubs, connected to many varieties. Red Blend, Riesling, and White Blend show highest versatility, appearing across multiple countries. This network reveals that wine production is highly concentrated among traditional Old World producers.</p>
+  </div>
+
+  <div class="viz-section">
+    <h3>Network 2: Region-Variety Network</h3>
+    <div class="viz-description">
+      A more granular network mapping 58 European wine regions to 104 varieties. Regions shown in blue, varieties in red. Node size reflects diversity; edge width shows association strength. Filtered to top 20% strongest associations for clarity.
+    </div>
+    <div class="metric-row">
+      <div class="metric-item"><strong>Central Hub:</strong><br>Sicily & Sardinia (highest PageRank)</div>
+      <div class="metric-item"><strong>Key Connector:</strong><br>Veneto (highest betweenness centrality)</div>
+    </div>
+    <p><strong>Key Finding:</strong> While Italy dominates at the country level, Sicily & Sardinia emerges as the most central region—connected to many varieties. Veneto acts as a crucial bridge between different parts of the network. Regional specialization is evident: Burgundy links to Pinot Noir, Alsace to Riesling, creating distinct flavor profiles.</p>
+  </div>
+
+  <div class="viz-section">
+    <h3>Network 3: Taster-Region-Variety Value Network</h3>
+    <div class="viz-description">
+      A tripartite network linking wine tasters (nodes), regions, and varieties, colored by quality-to-price ratio (yellow/green = high value, red = lower value). This network reveals which critics consistently find good deals and where value lies in the wine world.
+    </div>
+    <div class="value-box">
+      <strong>🏆 Top Value Wine:</strong> Cramele Recaș 2009 Chardonnay (Romania)<br>
+      Quality-to-Price Ratio: <strong>12.43</strong> | Price: $14 | Rating: 87 points
+    </div>
+    <div class="metric-row">
+      <div class="metric-item"><strong>Runner-ups:</strong><br>Lisboa (Portugal): 10.2<br>Nahe (Germany): 9.8</div>
+      <div class="metric-item"><strong>Expert Pickers:</strong><br>Anna Lee C. Iijima (23 reviews)<br>Roger Voss (140 reviews)</div>
+    </div>
+    <p><strong>Key Finding:</strong> Despite Chardonnay typically being an expensive, premium variety, Cramele Recaș achieves exceptional value through cost-effective Romanian production. Roger Voss and Anna Lee C. Iijima consistently identify high-value wines, though their average ratings differ (both tend toward higher scores, introducing some bias).</p>
+  </div>
+
+  <div class="viz-section">
+    <h3>Network 4: Variety-Price-Quality Hierarchical Network</h3>
+    <div class="viz-description">
+      A three-layer network showing how wine varieties (center) connect to price ranges (left: Budget, Affordable, Premium, Expensive) and quality tiers (right: Basic, Medium, High, Exceptional). Solid lines show price relationships; dashed lines show quality relationships.
+    </div>
+    <div class="metric-row">
+      <div class="metric-item"><strong>Network Density: 0.1307</strong><br>(Relatively sparse—relationships are specific)</div>
+      <div class="metric-item"><strong>Most Connected:</strong><br>Premium ($20-50) price tier<br>Medium Quality tier</div>
+    </div>
+    <p><strong>Key Finding:</strong> Prosecco has the strongest variety-quality link (19 wines to Medium Quality), while Riesling shows strong connection to High Quality (16 wines). Premium-priced wines dominate the network, suggesting most reviewed wines sit in the mid-market range. Nebbiolo bridges expensive and medium quality, hinting at diverse production quality.</p>
+  </div>
+
+  <div class="key-section">
+    <h2>Key Insights & Discoveries</h2>
+    <ul>
+      <li><strong>Geographic concentration:</strong> Italy and France control ~31% of the network's centrality, confirming Old World dominance</li>
+      <li><strong>Variety versatility:</strong> Red Blend, Riesling, and White Blend appear across regions—they're the "connector" varieties</li>
+      <li><strong>Regional specialization:</strong> Each region tends to specialize (Tuscany → Red Blend, Alsace → Riesling), creating distinct flavor profiles</li>
+      <li><strong>Value paradox:</strong> The best quality-to-price wine (Cramele Recaș) comes from an underrated region (Romania), suggesting market inefficiencies</li>
+      <li><strong>Critic subjectivity:</strong> Tasters show different rating patterns—high-volume critics (Roger Voss: 140 reviews) provide broader market perspective than specialists</li>
+    </ul>
+  </div>
+
+  <div class="key-section">
+    <h2>Limitations & Challenges</h2>
+    <ul>
+      <li><strong>Dataset size:</strong> 130k total rows reduced to 1,000 (European focus) and further filtered by data quality—small sample bias possible</li>
+      <li><strong>Network density:</strong> Over 100 varieties created very dense networks; filtering to top 20% associations improved clarity but lost nuance</li>
+      <li><strong>Critic bias:</strong> Tasters with few reviews (n=3-4) vs. many (n=140) have unequal influence; some tasters inflate ratings systematically</li>
+      <li><strong>Subjective "best":</strong> Quality-to-price ratios depend on critic preferences—what one taster rates 90 points, another rates 85. Wine appreciation remains deeply personal</li>
+      <li><strong>Temporal snapshot:</strong> Data from 2017; current prices and ratings may differ significantly</li>
+    </ul>
+  </div>
+
+  <div class="key-section">
+    <h2>Conclusion</h2>
+    <p>Network analysis transforms wine review data into actionable insights. Rather than treating wine as isolated products, viewing it as a network reveals:</p>
+    <ul>
+      <li>Which countries/regions are hubs vs. periphery</li>
+      <li>Which varieties are versatile vs. specialized</li>
+      <li>Where value lies (often in overlooked regions)</li>
+      <li>How expert opinions differ and influence perception</li>
+    </ul>
+    <p>The analysis confirms traditional wine wisdom (Italy & France dominate) while uncovering non-obvious patterns (Cramele Recaș offers unbeatable value; Sicily is a diversity hub). Yet ultimately, networks and numbers remind us that wine remains a deeply personal experience—the "best" wine is the one you enjoy most.</p>
+  </div>
+
+</main>
+
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display  = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+</script>
+
+</body>
+</html>
