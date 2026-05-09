@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Projects — Mariano Cánovas</title>
+<meta name="description" content="Java projects by Mariano Cánovas Martínez">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface-tint: #f0f0ed;
+    --ink: #0a0a0a;
+    --muted: #5a5a58;
+    --dim: #8e8e8c;
+    --border: #e2e2df;
+    --accent: #f89820;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  body.dark-mode {
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --surface-tint: #222222;
+    --ink: #f5f5f3;
+    --muted: #a0a0a0;
+    --dim: #666666;
+    --border: #2a2a2a;
+  }
+
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #ffffff; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  #top-controls {
+    position: fixed; top: 20px; right: 24px; z-index: 100;
+    display: flex; gap: 8px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  .nav-bar {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    transform: translateX(-3px);
+  }
+
+  .page-header {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lang-badge {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: #f89820;
+    color: white;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .page-title p {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+  }
+
+  .category-header {
+    padding: 12px 0 8px;
+    margin: 24px 0 16px;
+    border-bottom: 2px solid var(--border);
+  }
+  .category-header.first {
+    margin-top: 0;
+  }
+  .category-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .project-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 24px rgba(248, 152, 32, 0.1);
+  }
+
+
+
+  .project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 16px;
+    gap: 16px;
+  }
+
+  .project-title {
+    font-size: 18px;
+    font-weight: 650;
+    margin: 0;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  .date-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    background: var(--accent);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .project-desc {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 16px;
+    line-height: 1.6;
+  }
+
+  .project-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .meta-tag {
+    font-size: 10px;
+    color: var(--dim);
+    font-family: var(--mono);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: var(--surface-tint);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .metric {
+    background: var(--surface-tint);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .metric-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .metric-detail {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .code-container {
+    background: var(--surface-tint);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .code-header {
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .code-filename {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .code-copy {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-family: var(--mono);
+  }
+  .code-copy:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .code-block {
+    overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  pre {
+    margin: 0;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  code {
+    font-family: var(--mono);
+  }
+
+  .info-box {
+    background: var(--surface-tint);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .info-text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+
+  .btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+
+  footer {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  body.dark-mode .hljs {
+    background: var(--surface-tint) !important;
+    color: var(--ink) !important;
+  }
+
+  .improvement-badge {
+    display: inline-block;
+    background: #10b981;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 600px) {
+    .page-header { padding: 40px 20px 30px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 16px; }
+    .nav-bar { padding: 20px 20px 0; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .project-header { flex-direction: column; }
+    .button-group { flex-direction: column; }
+    .btn { width: 100%; justify-content: center; }
+    .code-block { max-height: 300px; }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .project-card.featured::before {
+      font-size: 8px;
+      padding: 3px 8px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<nav class="nav-bar">
+  <a href="index.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to home
+  </a>
+</nav>
+
+<header class="page-header">
+  <div class="lang-badge">J</div>
+  <div class="page-title">
+    <h1>Java Projects</h1>
+    <p>Object-oriented programming, algorithms, and applications.</p>
+  </div>
+</header>
+
+<main class="content">
+
+  <div class="category-header first">
+    <span class="category-label">Programming Projects</span>
+  </div>
+
+  <!-- SIMULATED ANNEALING: MAJOR PROJECT -->
+  <div class="project-card">
+    <div class="project-header">
+      <h2 class="project-title">Simulated Annealing Schedule Optimizer</h2>
+      <span class="date-badge">Mar 2025</span>
+    </div>
+    
+    <p class="project-desc">
+      Advanced metaheuristic optimization using Simulated Annealing to assign orders to 20 students while maximizing profit, respecting delivery time windows and student eligibility constraints. Complex real-world logistics problem solving with sophisticated algorithmic approaches.
+    </p>
+    
+    <div class="project-meta">
+      <span class="meta-tag">Simulated Annealing</span>
+      <span class="meta-tag">Metaheuristic Optimization</span>
+      <span class="meta-tag">Local Search</span>
+      <span class="meta-tag">Combinatorial Optimization</span>
+      <span class="meta-tag">Logistics</span>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric">
+        <div class="metric-label">Final Profit</div>
+        <div class="metric-value">€8,974</div>
+        <div class="metric-detail">Student Consulting Services</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Improvement</div>
+        <div class="metric-value">+66.8%</div>
+        <div class="metric-detail">From €5,379 baseline</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Iterations</div>
+        <div class="metric-value">18M</div>
+        <div class="metric-detail">In 150 seconds</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Acceptance Ratio</div>
+        <div class="metric-value">0.89</div>
+        <div class="metric-detail">High exploration rate</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">🎯 Problem Overview</div>
+      <p class="info-text">
+        <strong>Student Consulting Services B.V</strong> needs to assign delivery orders to 20 consultants to maximize profit. Constraints: (1) Max shift time: 8 hours per student, (2) Orders have location-dependent driving times, (3) Only eligible students can take specific orders, (4) Profit = order value - driving + work time. Initial solutions yield €5,000-5,500. Goal: optimize using Simulated Annealing.
+      </p>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">🧠 Algorithm & Approach</div>
+      <p class="info-text">
+        <strong>Local Search Operators (4 types):</strong><br>
+        • <strong>Insert Order (35%)</strong> — Add unassigned order to student's route if feasible<br>
+        • <strong>Remove Order (10%)</strong> — Remove assigned order for reassignment<br>
+        • <strong>Move Order (20%)</strong> — Transfer order between students<br>
+        • <strong>Two-Opt Swap (35%)</strong> — Reverse route segment to minimize driving time<br><br>
+        <strong>Cooling Schedule:</strong> Initial temperature 1,000,000 → cooling rate 0.999999 (very gradual) ensures extensive exploration of solution space before convergence. Temperature-dependent acceptance probability prevents getting stuck in local optima.
+      </p>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">📊 Performance Results</div>
+      <p class="info-text">
+        <strong>Initial experiments:</strong> Cooling rate 0.01 yielded only €5,379<br>
+        <strong>Tuned parameters:</strong> Cooling rate 0.999999 achieved €8,974.05<br>
+        <strong>Improvement:</strong> 66.8% gain through slower cooling (better exploration)<br>
+        <strong>Verification:</strong> 121,500 iterations/second × 150 seconds = 18M iterations total. All constraints satisfied; solution verified as valid.
+      </p>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <span class="code-filename">SimulatedAnnealingSolver.java</span>
+        <button class="code-copy" onclick="copyCode('saCode')">Copy Code</button>
+      </div>
+      <div class="code-block">
+        <pre><code id="saCode" class="language-java">import java.util.*;
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.Scanner;
+import java.util.concurrent.ThreadLocalRandom;
+
+public class SimulatedAnnealingSolver {
+
+    // Constants
+    private static final int MAX_SHIFT_TIME = 8 * 60 * 60;
+    private static final int HQ_NODE = 251;
+    private static final int NUM_STUDENTS = 20;
+    
+    // Data structures
+    private static int[][] drivingTimes;
+    private static Order[] orders;
+    private static int numOrders;
+    private static Solution bestSolution;
+    
+    // Parameters for SA
+    private static final double INITIAL_TEMPERATURE = 1000000;
+    private static final double MIN_TEMPERATURE = 1e-8;
+    private static final double COOLING_RATE = 0.999999;
+    private static final int MAX_RUNTIME_SECONDS = 150;
+    
+    // Tunable parameters for operator selection
+    private static final double[] OPERATOR_WEIGHTS = {0.35, 0.1, 0.2, 0.35}; 
+    private static double[] cumulativeWeights;
+    
+    // Statistics tracking
+    private static long acceptedMoves = 0;
+    private static long rejectedMoves = 0;
+    
+    static class Order {
+        int id, node, duration, profit;
+        boolean[] eligibleStudents;
+        int[] drivingTimesFromHQ;
+        int[] drivingTimesToHQ;
+        
+        Order(int id, int node, int duration, int profit, boolean[] eligibleStudents) {
+            this.id = id;
+            this.node = node;
+            this.duration = duration;
+            this.profit = profit;
+            this.eligibleStudents = eligibleStudents;
+        }
+        
+        void precomputeDrivingTimes() {
+            drivingTimesFromHQ = new int[numOrders + 1];
+            drivingTimesToHQ = new int[numOrders + 1];
+            drivingTimesFromHQ[numOrders] = drivingTimes[HQ_NODE][node];
+            drivingTimesToHQ[numOrders] = drivingTimes[node][HQ_NODE];
+            
+            for (int i = 0; i &lt; numOrders; i++) {
+                drivingTimesFromHQ[i] = drivingTimes[HQ_NODE][orders[i].node];
+                drivingTimesToHQ[i] = drivingTimes[orders[i].node][HQ_NODE];
+            }
+        }
+    }
+    
+    static class Solution {
+        List&lt;Integer&gt;[] routes;
+        Set&lt;Integer&gt; unassignedOrders;
+        double profit;
+        
+        int[] routeTimes;
+        int[] routeDrivingTimes;
+        int[] routeWorkTimes;
+        int[] routeProfits;
+        
+        @SuppressWarnings("unchecked")
+        public Solution() {
+            routes = new ArrayList[NUM_STUDENTS];
+            for (int i = 0; i &lt; NUM_STUDENTS; i++) {
+                routes[i] = new ArrayList&lt;&gt;();
+            }
+            unassignedOrders = new HashSet&lt;&gt;();
+            routeTimes = new int[NUM_STUDENTS];
+            routeDrivingTimes = new int[NUM_STUDENTS];
+            routeWorkTimes = new int[NUM_STUDENTS];
+            routeProfits = new int[NUM_STUDENTS];
+            profit = 0;
+        }
+        
+        public Solution copy() {
+            Solution copy = new Solution();
+            for (int i = 0; i &lt; NUM_STUDENTS; i++) {
+                copy.routes[i] = new ArrayList&lt;&gt;(this.routes[i]);
+                copy.routeTimes[i] = this.routeTimes[i];
+                copy.routeDrivingTimes[i] = this.routeDrivingTimes[i];
+                copy.routeWorkTimes[i] = this.routeWorkTimes[i];
+                copy.routeProfits[i] = this.routeProfits[i];
+            }
+            copy.unassignedOrders = new HashSet&lt;&gt;(this.unassignedOrders);
+            copy.profit = this.profit;
+            return copy;
+        }
+        
+        private void calculateRouteMetrics(int student) {
+            int drivingTime = 0;
+            int workTime = 0;
+            int routeProfit = 0;
+            
+            List&lt;Integer&gt; route = routes[student];
+            if (route.isEmpty()) {
+                routeDrivingTimes[student] = 0;
+                routeWorkTimes[student] = 0;
+                routeProfits[student] = 0;
+                routeTimes[student] = 0;
+                return;
+            }
+            
+            int currentNode = HQ_NODE;
+            for (int i = 0; i &lt; route.size(); i++) {
+                int orderIndex = route.get(i);
+                Order order = orders[orderIndex];
+                
+                drivingTime += drivingTimes[currentNode][order.node];
+                workTime += order.duration;
+                routeProfit += order.profit;
+                currentNode = order.node;
+            }
+            
+            drivingTime += drivingTimes[currentNode][HQ_NODE];
+            
+            routeDrivingTimes[student] = drivingTime;
+            routeWorkTimes[student] = workTime;
+            routeProfits[student] = routeProfit;
+            routeTimes[student] = drivingTime + workTime;
+        }
+        
+        public void recalculateAllMetrics() {
+            profit = 0;
+            for (int i = 0; i &lt; NUM_STUDENTS; i++) {
+                calculateRouteMetrics(i);
+                profit += routeProfits[i] - routeTimes[i];
+            }
+        }
+        
+        public void updateMetricsAfterInsert(int student, int orderIndex, int position) {
+            calculateRouteMetrics(student);
+            profit = 0;
+            for (int i = 0; i &lt; NUM_STUDENTS; i++) {
+                profit += routeProfits[i] - routeTimes[i];
+            }
+        }
+        
+        public void updateMetricsAfterRemove(int student) {
+            calculateRouteMetrics(student);
+            profit = 0;
+            for (int i = 0; i &lt; NUM_STUDENTS; i++) {
+                profit += routeProfits[i] - routeTimes[i];
+            }
+        }
+        
+        public boolean isRouteFeasible(int student) {
+            return routeTimes[student] &lt;= MAX_SHIFT_TIME;
+        }
+        
+        public boolean verify() {
+            for (int i = 0; i &lt; NUM_STUDENTS; i++) {
+                if (routeTimes[i] &gt; MAX_SHIFT_TIME) {
+                    return false;
+                }
+            }
+            
+            boolean[] assigned = new boolean[numOrders];
+            for (int i = 0; i &lt; NUM_STUDENTS; i++) {
+                for (int orderIndex : routes[i]) {
+                    if (assigned[orderIndex]) return false;
+                    assigned[orderIndex] = true;
+                }
+            }
+            
+            for (int i = 0; i &lt; NUM_STUDENTS; i++) {
+                for (int orderIndex : routes[i]) {
+                    if (!orders[orderIndex].eligibleStudents[i]) return false;
+                }
+            }
+            
+            return true;
+        }
+    }
+    
+    public static void main(String[] args) throws Exception {
+        readDrivingTimes("drivingtimes.txt");
+        readOrders("orders.txt");
+        precomputeOperatorWeights();
+        
+        Solution currentSolution = initializeSolution();
+        currentSolution.recalculateAllMetrics();
+        
+        bestSolution = currentSolution.copy();
+        double currentProfit = currentSolution.profit;
+        double bestProfit = bestSolution.profit;
+        
+        double temperature = INITIAL_TEMPERATURE;
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + MAX_RUNTIME_SECONDS * 1000;
+        int iterations = 0;
+        
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        System.out.println("Starting simulated annealing...");
+        
+        while (System.currentTimeMillis() &lt; endTime) {
+            iterations++;
+            
+            Solution neighborSolution = applyRandomOperator(currentSolution);
+            double delta = neighborSolution.profit - currentProfit;
+            
+            boolean accept = false;
+            if (delta &gt; 0) {
+                accept = true;
+            } else if (temperature &gt; 0) {
+                double acceptanceProbability = Math.exp(delta / temperature);
+                accept = random.nextDouble() &lt; acceptanceProbability;
+            }
+            
+            if (accept) {
+                acceptedMoves++;
+                currentSolution = neighborSolution;
+                currentProfit = neighborProfit;
+                
+                if (currentProfit &gt; bestProfit) {
+                    bestSolution = currentSolution.copy();
+                    bestProfit = currentProfit;
+                }
+            } else {
+                rejectedMoves++;
+            }
+            
+            temperature *= COOLING_RATE;
+        }
+        
+        System.out.println("Simulated annealing completed:");
+        System.out.println("Total iterations: " + iterations);
+        System.out.println("Best profit: " + (bestProfit / 60.0) + " euros");
+        System.out.println("Solution valid: " + bestSolution.verify());
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <a href="https://www.jdoodle.com/online-java-compiler" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><path d="M9 15l3 3 5-5"/></svg>
+        Run on JDoodle
+      </a>
+      <a href="https://replit.com/languages/java" target="_blank" rel="noopener noreferrer" class="btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+        Run on Replit
+      </a>
+    </div>
+  </div>
+
+  <div class="category-header">
+    <span class="category-label">University Assignments</span>
+  </div>
+
+  <!-- A7: Profitable Printing -->
+  <div class="project-card">
+    <div class="project-header">
+      <h2 class="project-title">A7 — Profitable Printing</h2>
+      <span class="date-badge">Mar 2024</span>
+    </div>
+    
+    <p class="project-desc">Dynamic programming for optimal book partition. Determine how to split n chapters into contiguous books to maximize total profit, where each book partition has a predetermined profit value P[i,j].</p>
+    
+    <div class="project-meta">
+      <span class="meta-tag">Dynamic Programming</span>
+      <span class="meta-tag">Optimization</span>
+      <span class="meta-tag">Modelling & Computing</span>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">Problem</div>
+      <p class="info-text">A printing company publishes a story with n chapters. Publishing chapters i...j as one book yields profit P[i,j]. Find the partitioning that maximizes total profit.</p>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <span class="code-filename">ProfitablePrinting.java</span>
+        <button class="code-copy" onclick="copyCode('a7Code')">Copy Code</button>
+      </div>
+      <div class="code-block">
+        <pre><code id="a7Code" class="language-java">public static int calculateMaxProfit(int[][] profit, int n) {
+    int[] dp = new int[n + 1];
+    dp[0] = 0;
+    
+    // Dynamic programming loop
+    for (int i = 1; i &lt;= n; i++) {
+        // Consider alternatives for the last book
+        for (int j = 1; j &lt;= i; j++) {
+            // j = first chapter in the last book (chapters j...i)
+            // Total profit = profit from chapters 1...j-1 + profit from book j...i
+            dp[i] = Math.max(dp[i], dp[j - 1] + profit[j][i]);
+        }
+    }
+    
+    return dp[n];
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <a href="https://www.jdoodle.com/online-java-compiler" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><path d="M9 15l3 3 5-5"/></svg>
+        Run on JDoodle
+      </a>
+    </div>
+  </div>
+
+  <!-- A5: Space Tourism -->
+  <div class="project-card">
+    <div class="project-header">
+      <h2 class="project-title">A5 — Space Tourism</h2>
+      <span class="date-badge">Feb 2024</span>
+    </div>
+    
+    <p class="project-desc">0/1 Knapsack problem for spacecraft payload optimization. Select tourists to maximize revenue while respecting weight capacity constraints.</p>
+    
+    <div class="project-meta">
+      <span class="meta-tag">Knapsack Problem</span>
+      <span class="meta-tag">Greedy Algorithm</span>
+      <span class="meta-tag">Modelling & Computing</span>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <span class="code-filename">SpaceTourism.java</span>
+        <button class="code-copy" onclick="copyCode('a5Code')">Copy Code</button>
+      </div>
+      <div class="code-block">
+        <pre><code id="a5Code" class="language-java">// Greedy approach: select lightest passengers first
+Arrays.sort(tourists);
+
+int totalRevenue = 0;
+int currentWeight = 0;
+List&lt;Integer&gt; selectedPassengers = new ArrayList&lt;&gt;();
+
+for (Tourist t : tourists) {
+    if (currentWeight + t.weight &lt;= M) {
+        currentWeight += t.weight;
+        totalRevenue += t.price;
+        selectedPassengers.add(t.id);
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <a href="https://www.jdoodle.com/online-java-compiler" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><path d="M9 15l3 3 5-5"/></svg>
+        Run on JDoodle
+      </a>
+    </div>
+  </div>
+
+  <!-- B4: Project Delays -->
+  <div class="project-card">
+    <div class="project-header">
+      <h2 class="project-title">B4 — Project Delays</h2>
+      <span class="date-badge">Feb 2024</span>
+    </div>
+    
+    <p class="project-desc">Topological sort with task scheduling. Find the minimum completion time for all tasks given their durations and dependencies using Kahn's algorithm.</p>
+    
+    <div class="project-meta">
+      <span class="meta-tag">Graph Theory</span>
+      <span class="meta-tag">Topological Sort</span>
+      <span class="meta-tag">Modelling & Computing</span>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <span class="code-filename">B4Exercise.java (excerpt)</span>
+        <button class="code-copy" onclick="copyCode('b4Code')">Copy Code</button>
+      </div>
+      <div class="code-block">
+        <pre><code id="b4Code" class="language-java">private static int minimumCompletionTime(Task[] tasks, 
+        List&lt;Integer&gt; completionOrder, int n) {
+    Queue&lt;Integer&gt; queue = new LinkedList&lt;&gt;();
+    int[] taskCompletionTime = new int[n + 1];
+    
+    // Kahn's algorithm: start with tasks having no prerequisites
+    for (int i = 1; i &lt;= n; i++) {
+        if (tasks[i].prerequisites == 0) {
+            queue.add(i);
+            taskCompletionTime[i] = tasks[i].duration;
+        }
+    }
+    
+    int countCompleted = 0;
+    while (!queue.isEmpty()) {
+        int currentTask = queue.poll();
+        countCompleted++;
+        completionOrder.add(currentTask);
+        
+        for (int nextTask : tasks[currentTask].nextTasks) {
+            taskCompletionTime[nextTask] = Math.max(
+                taskCompletionTime[nextTask], 
+                taskCompletionTime[currentTask] + tasks[nextTask].duration);
+            tasks[nextTask].prerequisites--;
+            if (tasks[nextTask].prerequisites == 0) {
+                queue.add(nextTask);
+            }
+        }
+    }
+    
+    if (countCompleted != n) return -1;
+    return Arrays.stream(taskCompletionTime).max().getAsInt();
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <a href="https://www.jdoodle.com/online-java-compiler" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><path d="M9 15l3 3 5-5"/></svg>
+        Run on JDoodle
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+
+function copyCode(elementId) {
+  const codeElement = document.getElementById(elementId);
+  const text = codeElement.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = 'Copied!';
+    setTimeout(() => {
+      btn.innerText = originalText;
+    }, 2000);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  hljs.highlightAll();
+  
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+});
+</script>
+
+</body>
+</html>
