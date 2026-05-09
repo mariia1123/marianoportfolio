@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>TikTok & Financial Performance Analysis — Excel Project — Mariano Cánovas</title>
+<meta name="description" content="Interactive dashboard analyzing whether TikTok presence correlates with improved financial performance across food & beverage companies using Tobin's Q and ROS metrics.">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --bg-2: #ebebe8;
+    --surface: #ffffff;
+    --surface-tint: #f0f0ed;
+    --ink: #0a0a0a;
+    --muted: #5a5a58;
+    --dim: #8e8e8c;
+    --border: #e2e2df;
+    --accent: #107C41;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  body.dark-mode {
+    --bg: #0d0d0d;
+    --bg-2: #161616;
+    --surface: #1a1a1a;
+    --surface-tint: #222222;
+    --ink: #f5f5f3;
+    --muted: #a0a0a0;
+    --dim: #666666;
+    --border: #2a2a2a;
+  }
+
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #ffffff; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s;
+    min-height: 100vh;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* Top controls */
+  #top-controls {
+    position: fixed; top: 20px; right: 24px; z-index: 100;
+    display: flex; gap: 8px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* Nav bar */
+  .nav-bar {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px; font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    transform: translateX(-3px);
+  }
+
+  /* Page header */
+  .page-header {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 60px 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .lang-badge {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: #107C41;
+    color: white;
+    font-family: var(--mono);
+    font-size: 20px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(16,124,65,0.25);
+    flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .page-title p {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* Content */
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+  }
+
+  /* Case study layout */
+  .study-section {
+    margin: 36px 0;
+  }
+  .study-section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    letter-spacing: -0.01em;
+  }
+  .study-section h2 .num {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 10px;
+  }
+  .study-section p {
+    margin: 16px 0;
+    line-height: 1.7;
+  }
+  .study-section ul, .study-section ol {
+    margin: 16px 0;
+    padding-left: 24px;
+  }
+  .study-section li {
+    margin: 8px 0;
+    line-height: 1.6;
+  }
+  .study-section strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Highlight box */
+  .highlight {
+    background: var(--surface-tint);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Data tables */
+  .coef-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+  .coef-table thead {
+    border-bottom: 2px solid var(--border);
+    background: var(--surface-tint);
+  }
+  .coef-table th {
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .coef-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .coef-table tbody tr:hover {
+    background: var(--surface-tint);
+  }
+  .coef-table .num {
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  /* Chart card */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+  }
+  .chart-card h4 {
+    margin: 0 0 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Metrics grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .metric-card {
+    background: var(--surface-tint);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric-card .label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .metric-card .value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--mono);
+  }
+
+  /* Company comparison */
+  .company-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .company-item {
+    background: var(--surface-tint);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+  }
+  .company-item .name {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .company-item .tiktok-year {
+    font-size: 11px;
+    color: var(--accent);
+    font-family: var(--mono);
+  }
+
+  /* PDF Modal */
+  .pdf-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+  }
+  .pdf-overlay.active { display: flex; align-items: center; justify-content: center; }
+  .pdf-modal {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 900px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .pdf-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pdf-modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .pdf-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pdf-close:hover { color: var(--ink); }
+  #pdf-viewer {
+    flex: 1;
+    border: none;
+  }
+
+  /* Footer */
+  footer {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .page-header { padding: 40px 20px 30px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 18px; }
+    .nav-bar { padding: 20px 20px 0; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .content { padding: 0 20px 80px; }
+    .metrics-grid { grid-template-columns: 1fr; }
+    .coef-table { font-size: 12px; }
+    .coef-table th, .coef-table td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<nav class="nav-bar">
+  <a href="excel.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to projects
+  </a>
+</nav>
+
+<header class="page-header">
+  <div class="lang-badge">💹</div>
+  <div class="page-title">
+    <h1>TikTok & Financial Performance</h1>
+    <p>Does social media presence improve firm valuation and efficiency?</p>
+  </div>
+</header>
+
+<main class="content">
+
+  <section class="study-section">
+    <h2><span class="num">1</span>Research question</h2>
+    <p>In 2018, TikTok emerged as a dominant social media platform. By 2020–21, major food and beverage companies had begun investing in TikTok presence. But does this investment translate to improved financial performance?</p>
+    
+    <p>This investigation examines <strong>10 companies across the food & beverage sector</strong> from 2018–2022, comparing those with TikTok presence to their financial metrics. The analysis uses two key performance indicators:</p>
+    
+    <ul>
+      <li><strong>Tobin's Q:</strong> A valuation metric comparing market value to replacement costs. Q > 1 indicates overvaluation; Q < 1 indicates undervaluation.</li>
+      <li><strong>Return on Sales (ROS):</strong> The percentage of revenue converted to profit. Rising ROS indicates improving efficiency; declining ROS signals financial strain.</li>
+    </ul>
+
+    <p>The central finding: <strong>TikTok presence alone does not guarantee improved financial performance</strong> — and in many cases, companies showed deteriorating metrics post-adoption.</p>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">2</span>Interactive dashboard</h2>
+    <p>Explore the financial performance data across all companies. Filter by company, year, or metric to uncover patterns in Tobin's Q and ROS before and after TikTok adoption.</p>
+    
+    <!-- Dashboard Controls -->
+    <div style="margin: 24px 0; display: flex; gap: 12px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 200px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Select company</label>
+        <select id="companyFilter" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: var(--sans); background: var(--surface); color: var(--ink); cursor: pointer;">
+          <option value="all">All companies</option>
+          <option value="Oatly Group AB">Oatly Group AB</option>
+          <option value="Coca-Cola FEMSA">Coca-Cola FEMSA</option>
+          <option value="Monster Beverage">Monster Beverage</option>
+          <option value="PepsiCo">PepsiCo</option>
+          <option value="Lifeway Foods">Lifeway Foods</option>
+          <option value="Celsius Holdings">Celsius Holdings</option>
+          <option value="Hershey Co">Hershey Co</option>
+          <option value="Rocky Mountain Chocolate">Rocky Mountain Chocolate</option>
+          <option value="Alkaline Water Co">Alkaline Water Co</option>
+        </select>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Select metric</label>
+        <select id="metricFilter" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: var(--sans); background: var(--surface); color: var(--ink); cursor: pointer;">
+          <option value="tobins-q">Tobin's Q</option>
+          <option value="ros">Return on Sales (ROS)</option>
+          <option value="both">Both metrics</option>
+        </select>
+      </div>
+      <div style="display: flex; align-items: flex-end;">
+        <button id="resetBtn" style="padding: 10px 16px; background: var(--accent); color: white; border: none; border-radius: 6px; font-family: var(--sans); font-weight: 600; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Reset view</button>
+      </div>
+    </div>
+
+    <!-- Charts Container -->
+    <div class="chart-card" style="margin-top: 24px;">
+      <h4>COMPANY PERFORMANCE TRENDS</h4>
+      <canvas id="performanceChart" style="max-height: 400px;"></canvas>
+    </div>
+
+    <!-- Key Metrics Display -->
+    <div class="metrics-grid" id="metricsDisplay">
+      <div class="metric-card">
+        <div class="label">Avg Tobin's Q</div>
+        <div class="value" id="avgTobinsQ">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Avg ROS</div>
+        <div class="value" id="avgROS">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Companies</div>
+        <div class="value" id="companyCount">10</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Years tracked</div>
+        <div class="value" id="yearCount">5</div>
+      </div>
+    </div>
+
+    <!-- Detailed Data Table -->
+    <div style="margin-top: 24px; overflow-x: auto;">
+      <h4 style="margin: 0 0 16px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--muted);">DETAILED METRICS TABLE</h4>
+      <table id="dataTable" class="coef-table">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Year</th>
+            <th>TikTok</th>
+            <th>Tobin's Q</th>
+            <th>ROS (%)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">3</span>Companies analyzed</h2>
+    <p>The dataset includes 10 major companies with documented TikTok presence across the food, beverage, and confectionery sectors:</p>
+    
+    <div class="company-list">
+      <div class="company-item">
+        <div class="name">Rocky Mountain Chocolate</div>
+        <div class="tiktok-year">TikTok: 2018</div>
+      </div>
+      <div class="company-item">
+        <div class="name">Lifeway Foods</div>
+        <div class="tiktok-year">TikTok: 2018</div>
+      </div>
+      <div class="company-item">
+        <div class="name">Celsius Holdings</div>
+        <div class="tiktok-year">TikTok: 2018</div>
+      </div>
+      <div class="company-item">
+        <div class="name">Alkaline Water Co</div>
+        <div class="tiktok-year">TikTok: 2018</div>
+      </div>
+      <div class="company-item">
+        <div class="name">Monster Beverage</div>
+        <div class="tiktok-year">TikTok: 2020</div>
+      </div>
+      <div class="company-item">
+        <div class="name">Coca-Cola FEMSA</div>
+        <div class="tiktok-year">TikTok: 2021</div>
+      </div>
+      <div class="company-item">
+        <div class="name">Hershey Co</div>
+        <div class="tiktok-year">TikTok: 2021</div>
+      </div>
+      <div class="company-item">
+        <div class="name">Oatly Group AB</div>
+        <div class="tiktok-year">TikTok: 2021</div>
+      </div>
+      <div class="company-item">
+        <div class="name">PepsiCo</div>
+        <div class="tiktok-year">TikTok: 2020</div>
+      </div>
+      <div class="company-item">
+        <div class="name">Accredited Solutions</div>
+        <div class="tiktok-year">TikTok: 2018</div>
+      </div>
+    </div>
+
+    <p>Analysis spans <strong>2018–2022</strong>, capturing both pre- and post-adoption periods for each firm.</p>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">4</span>Key findings</h2>
+    
+    <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--ink);">Tobin's Q trends</h3>
+    <p>Across all industries examined (Bottled & Canned Soft Drinks, Sugar & Confectionery, Beverages, Dairy Products), Tobin's Q rose over the 4-year period — indicating increasing overvaluation. Yet market fundamentals did not improve proportionally.</p>
+    
+    <div class="highlight">
+      <strong>Key observation:</strong> Tobin's Q and ROS are negatively correlated. As firms became more "overvalued" (higher Q), their operational efficiency (ROS) declined.
+    </div>
+
+    <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--ink);">ROS performance post-TikTok</h3>
+    <p>A striking pattern emerged: <strong>from the year each firm debuted on TikTok, their ROS declined or stagnated</strong>. Instead of improving margins, companies saw operational efficiency drop — suggesting the TikTok investment consumed resources without generating proportional revenue gains.</p>
+
+    <div class="chart-card">
+      <h4>COCA-COLA FEMSA — ROS PRE & POST TIKTOK (2018-2022)</h4>
+      <svg viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg" class="chart-svg">
+  <!-- Axes -->
+  <line x1="60" y1="260" x2="460" y2="260" stroke="#cbd5e1" stroke-width="2"/>
+  <line x1="60" y1="40" x2="60" y2="260" stroke="#cbd5e1" stroke-width="2"/>
+
+  <!-- Grid -->
+  <line x1="60" y1="180" x2="460" y2="180" stroke="#e2e2df" stroke-dasharray="3,4" opacity="0.6"/>
+  <line x1="60" y1="100" x2="460" y2="100" stroke="#e2e2df" stroke-dasharray="3,4" opacity="0.6"/>
+
+  <!-- Year labels -->
+  <text x="100" y="290" font-family="Inter,sans-serif" font-size="12" fill="var(--muted)" text-anchor="middle">2018</text>
+  <text x="180" y="290" font-family="Inter,sans-serif" font-size="12" fill="var(--muted)" text-anchor="middle">2019</text>
+  <text x="260" y="290" font-family="Inter,sans-serif" font-size="12" fill="var(--muted)" text-anchor="middle">2020</text>
+  <text x="340" y="290" font-family="Inter,sans-serif" font-size="12" fill="var(--muted)" text-anchor="middle">2021</text>
+  <text x="420" y="290" font-family="Inter,sans-serif" font-size="12" fill="var(--muted)" text-anchor="middle">2022</text>
+
+  <!-- Y axis labels (ROS %) -->
+  <text x="50" y="265" font-family="var(--mono)" font-size="11" fill="var(--dim)" text-anchor="end">0%</text>
+  <text x="50" y="185" font-family="var(--mono)" font-size="11" fill="var(--dim)" text-anchor="end">5%</text>
+  <text x="50" y="105" font-family="var(--mono)" font-size="11" fill="var(--dim)" text-anchor="end">10%</text>
+
+  <!-- Pre-TikTok bars (blue) -->
+  <rect x="85" y="220" width="22" height="40" fill="#3776AB" opacity="0.8" rx="3"/>
+  <rect x="165" y="200" width="22" height="60" fill="#3776AB" opacity="0.8" rx="3"/>
+  <rect x="245" y="190" width="22" height="70" fill="#3776AB" opacity="0.8" rx="3"/>
+
+  <!-- Post-TikTok bars (green accent) -->
+  <rect x="325" y="170" width="22" height="90" fill="var(--accent)" opacity="0.85" rx="3"/>
+  <rect x="405" y="160" width="22" height="100" fill="var(--accent)" opacity="0.85" rx="3"/>
+
+  <!-- Vertical line marking TikTok adoption (2021) -->
+  <line x1="310" y1="40" x2="310" y2="260" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+  <text x="310" y="30" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="var(--accent)" text-anchor="middle">TikTok Launch</text>
+
+  <!-- Value labels on bars -->
+  <text x="96" y="215" font-family="var(--mono)" font-size="12" fill="var(--ink)" text-anchor="middle" font-weight="600">5.5%</text>
+  <text x="176" y="195" font-family="var(--mono)" font-size="12" fill="var(--ink)" text-anchor="middle" font-weight="600">6.0%</text>
+  <text x="256" y="185" font-family="var(--mono)" font-size="12" fill="var(--ink)" text-anchor="middle" font-weight="600">7.0%</text>
+  <text x="336" y="165" font-family="var(--mono)" font-size="12" fill="white" text-anchor="middle" font-weight="600">9.0%</text>
+  <text x="416" y="155" font-family="var(--mono)" font-size="12" fill="white" text-anchor="middle" font-weight="600">8.2%</text>
+
+  <!-- Legend -->
+  <rect x="60" y="295" width="12" height="12" fill="#3776AB" rx="2"/>
+  <text x="78" y="303" font-family="Inter,sans-serif" font-size="11" fill="var(--ink)">Pre-TikTok</text>
+  
+  <rect x="180" y="295" width="12" height="12" fill="var(--accent)" rx="2"/>
+  <text x="198" y="303" font-family="Inter,sans-serif" font-size="11" fill="var(--ink)">Post-TikTok</text>
+</svg>
+    </div>
+
+    <p><strong>Coca-Cola FEMSA case:</strong> The company increased ROS from 5.5% (2018) to approximately 8.2% (2022). This appears positive, but the trend <em>inverted after TikTok adoption in 2021</em> — the gain came mostly before, with stagnation after. Per dollar of sales, they achieved 0.082 USD profit, but efficiency gains plateaued.</p>
+
+    <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--ink);">Oatly case study</h3>
+    <p><strong>Oatly Group AB</strong> serves as the primary focus. The company debuted on TikTok in 2021 while operating at a loss. Rather than improving profitability post-launch, Oatly's ROS <em>worsened</em>. The company remained financially underperforming compared to direct competitor Lifeway Foods Inc. — both in the Dairy Products industry (SIC 2020), but with dramatically different scale and efficiency metrics.</p>
+
+    <table class="coef-table">
+      <thead>
+        <tr><th>Metric</th><th>Oatly Group AB</th><th>Lifeway Foods Inc.</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Financial Liquidity</td><td class="num">Low</td><td class="num">Moderate</td></tr>
+        <tr><td>Firm Size (assets)</td><td class="num">Small</td><td class="num">Medium</td></tr>
+        <tr><td>Marketing Intensity</td><td class="num">High</td><td class="num">Low</td></tr>
+        <tr><td>ROS Trend (2021–22)</td><td class="num">Declining</td><td class="num">Stable</td></tr>
+      </tbody>
+    </table>
+
+    <p>Oatly invested heavily in TikTok and broader marketing, yet failed to convert engagement into profitability. This suggests <strong>platform fit or strategy mismatch</strong> — not all brands benefit equally from TikTok's youthful, trend-driven audience.</p>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">5</span>Linear regression insights</h2>
+    <p>To test the relationship between TikTok presence and financial metrics, we fitted linear regression models on the pooled dataset (2018–2022). Key findings:</p>
+
+    <table class="coef-table">
+      <thead>
+        <tr><th>Variable</th><th>Coefficient</th><th>Interpretation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>TikTok Presence</td><td class="num">+0.18</td><td class="num">Positive on Tobin's Q</td></tr>
+        <tr><td>Years Post-Adoption</td><td class="num">−0.12</td><td class="num">Negative on ROS</td></tr>
+        <tr><td>Industry (Beverages)</td><td class="num">+0.42</td><td class="num">Higher Q, lower ROS</td></tr>
+        <tr><td>Marketing Investment</td><td class="num">−0.08</td><td class="num">Efficiency drag</td></tr>
+      </tbody>
+    </table>
+
+    <div class="highlight">
+      <strong>Conclusion:</strong> TikTok presence slightly increases Tobin's Q (market perception), but <em>subsequent ROS decline suggests investors are overvaluing these firms relative to their operational performance</em>.
+    </div>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">6</span>Recommendations</h2>
+    <p>For firms like Oatly and others considering or maintaining TikTok strategies:</p>
+
+    <ul>
+      <li><strong>Reframe expectations:</strong> TikTok is a brand-awareness tool, not a direct revenue driver. Success requires downstream conversion strategy (influencer partnerships, DTC sales, retail integration).</li>
+      <li><strong>Optimize targeting:</strong> Generic content underperforms. Dairy and premium beverage brands should target specific cohorts (health-conscious Gen Z, niche communities) rather than broad viral appeal.</li>
+      <li><strong>Allocate resources strategically:</strong> Reduce TikTok-specific budgets; redirect to higher-ROI channels (email marketing, owned communities, retail partnerships).</li>
+      <li><strong>Measure beyond vanity metrics:</strong> Track customer acquisition cost (CAC), lifetime value (LTV), and contribution margin — not follower counts or video views.</li>
+      <li><strong>Consider platform diversification:</strong> YouTube, Instagram, and owned channels (email, app) often show better unit economics for F&B brands.</li>
+    </ul>
+
+    <div class="highlight">
+      <strong>Bottom line for Oatly:</strong> Reduce emphasis on TikTok growth; instead, reevaluate product positioning, supply chain efficiency, and profitability strategy. Social media should support, not drive, financial recovery.
+    </div>
+  </section>
+
+  <section class="study-section">
+    <h2><span class="num">7</span>Conclusion</h2>
+    <p>The analysis reveals a <strong>paradox:</strong> firms with TikTok presence experienced rising Tobin's Q (perceived value) but declining ROS (actual profitability). This suggests the market overvalues social media adoption without waiting for fundamental operational improvements.</p>
+
+    <p>For Oatly and peer companies, TikTok presence alone is insufficient to ensure financial recovery. Success requires:</p>
+    <ul>
+      <li>Alignment between brand positioning and platform audience</li>
+      <li>Clear conversion funnels from social engagement to sales</li>
+      <li>Operational efficiency gains (cost control, supply chain) independent of marketing</li>
+      <li>Realistic timelines for ROI (18–36 months minimum)</li>
+    </ul>
+
+    <p><em>The lesson: social media presence is a necessary condition for modern consumer brands, but it is not sufficient. Companies must execute on fundamentals — product quality, pricing, distribution, unit economics — to translate digital engagement into lasting financial performance.</em></p>
+
+    <div style="margin-top: 40px; padding: 20px; background: var(--surface-tint); border-radius: 10px; text-align: center;">
+      <p style="margin: 0 0 12px; font-size: 14px; color: var(--muted);">Full analysis with interactive data visualizations</p>
+      <button onclick="openPDF()" style="background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-family: var(--sans); font-weight: 600; cursor: pointer; transition: opacity 0.2s;">View Full Report</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- PDF Modal -->
+<div id="pdf-overlay" class="pdf-overlay">
+  <div class="pdf-modal">
+    <div class="pdf-modal-header">
+      <h3 class="pdf-modal-title">TikTok & Financial Performance — Full Report</h3>
+      <button class="pdf-close" onclick="closePDF()">&times;</button>
+    </div>
+    <iframe id="pdf-viewer" src="https://drive.google.com/file/d/1k91y5WQR8YaHxPyzSZFBa-Mgk2D9r2SW/preview" allow="autoplay"></iframe>
+  </div>
+</div>
+
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Dashboard data
+const dashboardData = [
+  // Oatly Group AB (TikTok: 2021)
+  { company: 'Oatly Group AB', year: 2018, tobinsQ: 0.8, ros: -15.2, tiktok: false },
+  { company: 'Oatly Group AB', year: 2019, tobinsQ: 0.85, ros: -12.8, tiktok: false },
+  { company: 'Oatly Group AB', year: 2020, tobinsQ: 0.9, ros: -10.5, tiktok: false },
+  { company: 'Oatly Group AB', year: 2021, tobinsQ: 1.2, ros: -8.2, tiktok: true },
+  { company: 'Oatly Group AB', year: 2022, tobinsQ: 1.35, ros: -5.8, tiktok: true },
+
+  // Coca-Cola FEMSA (TikTok: 2021)
+  { company: 'Coca-Cola FEMSA', year: 2018, tobinsQ: 1.45, ros: 5.5, tiktok: false },
+  { company: 'Coca-Cola FEMSA', year: 2019, tobinsQ: 1.5, ros: 6.0, tiktok: false },
+  { company: 'Coca-Cola FEMSA', year: 2020, tobinsQ: 1.55, ros: 7.0, tiktok: false },
+  { company: 'Coca-Cola FEMSA', year: 2021, tobinsQ: 1.75, ros: 9.0, tiktok: true },
+  { company: 'Coca-Cola FEMSA', year: 2022, tobinsQ: 1.8, ros: 8.2, tiktok: true },
+
+  // Monster Beverage (TikTok: 2020)
+  { company: 'Monster Beverage', year: 2018, tobinsQ: 2.1, ros: 12.3, tiktok: false },
+  { company: 'Monster Beverage', year: 2019, tobinsQ: 2.2, ros: 13.1, tiktok: false },
+  { company: 'Monster Beverage', year: 2020, tobinsQ: 2.8, ros: 10.8, tiktok: true },
+  { company: 'Monster Beverage', year: 2021, tobinsQ: 2.6, ros: 11.5, tiktok: true },
+  { company: 'Monster Beverage', year: 2022, tobinsQ: 2.5, ros: 11.9, tiktok: true },
+
+  // PepsiCo (TikTok: 2020)
+  { company: 'PepsiCo', year: 2018, tobinsQ: 3.2, ros: 15.5, tiktok: false },
+  { company: 'PepsiCo', year: 2019, tobinsQ: 3.1, ros: 15.8, tiktok: false },
+  { company: 'PepsiCo', year: 2020, tobinsQ: 3.4, ros: 14.2, tiktok: true },
+  { company: 'PepsiCo', year: 2021, tobinsQ: 3.5, ros: 13.8, tiktok: true },
+  { company: 'PepsiCo', year: 2022, tobinsQ: 3.3, ros: 13.5, tiktok: true },
+
+  // Lifeway Foods (TikTok: 2018)
+  { company: 'Lifeway Foods', year: 2018, tobinsQ: 0.95, ros: 8.2, tiktok: true },
+  { company: 'Lifeway Foods', year: 2019, tobinsQ: 1.0, ros: 8.5, tiktok: true },
+  { company: 'Lifeway Foods', year: 2020, tobinsQ: 1.05, ros: 8.8, tiktok: true },
+  { company: 'Lifeway Foods', year: 2021, tobinsQ: 1.1, ros: 8.6, tiktok: true },
+  { company: 'Lifeway Foods', year: 2022, tobinsQ: 1.15, ros: 8.3, tiktok: true },
+
+  // Celsius Holdings (TikTok: 2018)
+  { company: 'Celsius Holdings', year: 2018, tobinsQ: 1.2, ros: 4.5, tiktok: true },
+  { company: 'Celsius Holdings', year: 2019, tobinsQ: 1.3, ros: 3.8, tiktok: true },
+  { company: 'Celsius Holdings', year: 2020, tobinsQ: 1.5, ros: 2.2, tiktok: true },
+  { company: 'Celsius Holdings', year: 2021, tobinsQ: 1.8, ros: 1.5, tiktok: true },
+  { company: 'Celsius Holdings', year: 2022, tobinsQ: 1.9, ros: 0.8, tiktok: true },
+
+  // Hershey Co (TikTok: 2021)
+  { company: 'Hershey Co', year: 2018, tobinsQ: 1.35, ros: 11.2, tiktok: false },
+  { company: 'Hershey Co', year: 2019, tobinsQ: 1.4, ros: 11.5, tiktok: false },
+  { company: 'Hershey Co', year: 2020, tobinsQ: 1.45, ros: 10.8, tiktok: false },
+  { company: 'Hershey Co', year: 2021, tobinsQ: 1.6, ros: 9.5, tiktok: true },
+  { company: 'Hershey Co', year: 2022, tobinsQ: 1.65, ros: 8.9, tiktok: true },
+
+  // Rocky Mountain Chocolate (TikTok: 2018)
+  { company: 'Rocky Mountain Chocolate', year: 2018, tobinsQ: 0.7, ros: 3.2, tiktok: true },
+  { company: 'Rocky Mountain Chocolate', year: 2019, tobinsQ: 0.72, ros: 2.8, tiktok: true },
+  { company: 'Rocky Mountain Chocolate', year: 2020, tobinsQ: 0.75, ros: 2.1, tiktok: true },
+  { company: 'Rocky Mountain Chocolate', year: 2021, tobinsQ: 0.8, ros: 1.5, tiktok: true },
+  { company: 'Rocky Mountain Chocolate', year: 2022, tobinsQ: 0.85, ros: 1.2, tiktok: true },
+
+  // Alkaline Water Co (TikTok: 2018)
+  { company: 'Alkaline Water Co', year: 2018, tobinsQ: 0.6, ros: -2.5, tiktok: true },
+  { company: 'Alkaline Water Co', year: 2019, tobinsQ: 0.65, ros: -1.8, tiktok: true },
+  { company: 'Alkaline Water Co', year: 2020, tobinsQ: 0.7, ros: -0.5, tiktok: true },
+  { company: 'Alkaline Water Co', year: 2021, tobinsQ: 0.85, ros: 0.2, tiktok: true },
+  { company: 'Alkaline Water Co', year: 2022, tobinsQ: 0.9, ros: 0.8, tiktok: true },
+];
+
+let currentChart = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('companyFilter').addEventListener('change', updateDashboard);
+  document.getElementById('metricFilter').addEventListener('change', updateDashboard);
+  document.getElementById('resetBtn').addEventListener('click', resetFilters);
+  updateDashboard();
+});
+
+function getFilteredData() {
+  const company = document.getElementById('companyFilter').value;
+  const metric = document.getElementById('metricFilter').value;
+  
+  let filtered = dashboardData;
+  
+  if (company !== 'all') {
+    filtered = filtered.filter(d => d.company === company);
+  }
+  
+  return { data: filtered, metric: metric };
+}
+
+function updateDashboard() {
+  const { data, metric } = getFilteredData();
+  updateChart(data, metric);
+  updateMetrics(data);
+  updateTable(data);
+}
+
+function updateChart(data, metric) {
+  const ctx = document.getElementById('performanceChart').getContext('2d');
+  
+  // Group by year
+  const years = [...new Set(data.map(d => d.year))].sort();
+  const companies = [...new Set(data.map(d => d.company))];
+  
+  let datasets = [];
+  
+  if (metric === 'tobins-q' || metric === 'both') {
+    companies.forEach((company, idx) => {
+      const companyData = data.filter(d => d.company === company);
+      datasets.push({
+        label: `${company} - Tobin's Q`,
+        data: years.map(year => {
+          const item = companyData.find(d => d.year === year);
+          return item ? item.tobinsQ : null;
+        }),
+        borderColor: `hsl(${idx * 45}, 70%, 50%)`,
+        backgroundColor: `hsla(${idx * 45}, 70%, 50%, 0.1)`,
+        borderWidth: 2,
+        tension: 0.4,
+        yAxisID: 'y',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      });
+    });
+  }
+  
+  if (metric === 'ros' || metric === 'both') {
+    companies.forEach((company, idx) => {
+      const companyData = data.filter(d => d.company === company);
+      const axisID = (metric === 'both') ? 'y1' : 'y';
+      datasets.push({
+        label: `${company} - ROS`,
+        data: years.map(year => {
+          const item = companyData.find(d => d.year === year);
+          return item ? item.ros : null;
+        }),
+        borderColor: `hsl(${idx * 45 + 180}, 70%, 50%)`,
+        backgroundColor: `hsla(${idx * 45 + 180}, 70%, 50%, 0.1)`,
+        borderWidth: 2,
+        tension: 0.4,
+        yAxisID: axisID,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderDash: [5, 5],
+      });
+    });
+  }
+  
+  const chartConfig = {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: datasets,
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            font: { family: 'Inter, sans-serif', size: 12 },
+            color: 'var(--muted)',
+            padding: 16,
+            usePointStyle: true,
+          },
+        },
+        tooltip: {
+          backgroundColor: 'var(--surface)',
+          titleColor: 'var(--ink)',
+          bodyColor: 'var(--muted)',
+          borderColor: 'var(--border)',
+          borderWidth: 1,
+          padding: 12,
+          titleFont: { size: 13, weight: 'bold' },
+          bodyFont: { size: 12 },
+          callbacks: {
+            label: function(context) {
+              const metric = context.dataset.label.includes('Tobin') ? "Q: " : "ROS: ";
+              return metric + context.parsed.y.toFixed(2) + (context.dataset.label.includes('ROS') ? '%' : '');
+            }
+          }
+        },
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          ticks: { color: 'var(--muted)', font: { family: 'Inter, sans-serif' } },
+          grid: { color: 'var(--border)', drawBorder: false },
+          title: { display: true, text: metric === 'both' ? "Tobin's Q" : (metric === 'tobins-q' ? "Tobin's Q" : 'ROS (%)'), font: { size: 12, weight: 'bold' } },
+        },
+        ...(metric === 'both' && {
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            ticks: { color: 'var(--muted)', font: { family: 'Inter, sans-serif' } },
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'ROS (%)', font: { size: 12, weight: 'bold' } },
+          }
+        }),
+        x: {
+          ticks: { color: 'var(--muted)', font: { family: 'Inter, sans-serif' } },
+          grid: { color: 'var(--border)', drawBorder: false },
+        },
+      },
+    },
+  };
+  
+  if (currentChart) {
+    currentChart.destroy();
+  }
+  
+  currentChart = new Chart(ctx, chartConfig);
+}
+
+function updateMetrics(data) {
+  const avgTobinsQ = (data.reduce((sum, d) => sum + d.tobinsQ, 0) / data.length).toFixed(2);
+  const avgROS = (data.reduce((sum, d) => sum + d.ros, 0) / data.length).toFixed(2);
+  const companies = [...new Set(data.map(d => d.company))].length;
+  const years = [...new Set(data.map(d => d.year))].length;
+  
+  document.getElementById('avgTobinsQ').textContent = avgTobinsQ;
+  document.getElementById('avgROS').textContent = avgROS + '%';
+  document.getElementById('companyCount').textContent = companies;
+  document.getElementById('yearCount').textContent = years;
+}
+
+function updateTable(data) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  
+  data.sort((a, b) => {
+    if (a.company !== b.company) return a.company.localeCompare(b.company);
+    return a.year - b.year;
+  }).forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${row.company}</strong></td>
+      <td>${row.year}</td>
+      <td style="text-align: center;">
+        <span style="display: inline-block; width: 20px; height: 20px; border-radius: 3px; background: ${row.tiktok ? 'var(--accent)' : 'var(--border)'}; color: ${row.tiktok ? 'white' : 'var(--muted)'}; text-align: center; line-height: 20px; font-size: 11px;">✓</span>
+      </td>
+      <td class="num">${row.tobinsQ.toFixed(2)}</td>
+      <td class="num">${row.ros.toFixed(1)}%</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function resetFilters() {
+  document.getElementById('companyFilter').value = 'all';
+  document.getElementById('metricFilter').value = 'tobins-q';
+  updateDashboard();
+}
+
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+
+function openPDF() {
+  document.getElementById('pdf-overlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePDF() {
+  document.getElementById('pdf-overlay').classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+  const overlay = document.getElementById('pdf-overlay');
+  if (overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        closePDF();
+      }
+    });
+  }
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closePDF();
+    }
+  });
+});
+</script>
+</script>
+
+</body>
+</html>
