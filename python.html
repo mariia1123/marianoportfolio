@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Projects — Mariano Cánovas</title>
+<meta name="description" content="Python projects by Mariano Cánovas Martínez">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface-tint: #f0f0ed;
+    --ink: #0a0a0a;
+    --muted: #5a5a58;
+    --dim: #8e8e8c;
+    --border: #e2e2df;
+    --accent: #3776AB;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  body.dark-mode {
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --surface-tint: #222222;
+    --ink: #f5f5f3;
+    --muted: #a0a0a0;
+    --dim: #666666;
+    --border: #2a2a2a;
+  }
+
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #ffffff; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  #top-controls {
+    position: fixed; top: 20px; right: 24px; z-index: 100;
+    display: flex; gap: 8px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  .nav-bar {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    transform: translateX(-3px);
+  }
+
+  .page-header {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lang-badge {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: #3776AB;
+    color: white;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .page-title p {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+  }
+
+  .category-header {
+    padding: 12px 0 8px;
+    margin: 24px 0 16px;
+    border-bottom: 2px solid var(--border);
+  }
+  .category-header.first {
+    margin-top: 0;
+  }
+  .category-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .project-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 24px rgba(55, 118, 171, 0.1);
+  }
+
+  .project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 16px;
+    gap: 16px;
+  }
+
+  .project-title {
+    font-size: 18px;
+    font-weight: 650;
+    margin: 0;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  .date-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    background: var(--accent);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .project-desc {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 16px;
+    line-height: 1.6;
+  }
+
+  .project-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .meta-tag {
+    font-size: 10px;
+    color: var(--dim);
+    font-family: var(--mono);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: var(--surface-tint);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .code-container {
+    background: var(--surface-tint);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .code-header {
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .code-filename {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .code-copy {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-family: var(--mono);
+  }
+  .code-copy:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .code-block {
+    overflow-x: auto;
+    max-height: 450px;
+    overflow-y: auto;
+  }
+
+  pre {
+    margin: 0;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  code {
+    font-family: var(--mono);
+  }
+
+  .info-box {
+    background: var(--surface-tint);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .info-text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+
+  .btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+
+  footer {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  body.dark-mode .hljs {
+    background: var(--surface-tint) !important;
+    color: var(--ink) !important;
+  }
+
+  @media (max-width: 600px) {
+    .page-header { padding: 40px 20px 30px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 16px; }
+    .nav-bar { padding: 20px 20px 0; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .project-header { flex-direction: column; }
+    .button-group { flex-direction: column; }
+    .btn { width: 100%; justify-content: center; }
+    .code-block { max-height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<nav class="nav-bar">
+  <a href="index.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to home
+  </a>
+</nav>
+
+<header class="page-header">
+  <div class="lang-badge">Py</div>
+  <div class="page-title">
+    <h1>Python Projects</h1>
+    <p>Data analysis, automation, and object-oriented programming.</p>
+  </div>
+</header>
+
+<main class="content">
+
+  <div class="category-header first">
+    <span class="category-label">Networks & Simulations</span>
+  </div>
+
+  <!-- Mapping the World of Wine -->
+  <div class="project-card">
+    <div class="project-header">
+      <h2 class="project-title">Mapping the World of Wine — Network Analysis</h2>
+      <span class="date-badge">Apr 2025</span>
+    </div>
+
+    <p class="project-desc">Python network analysis of WineEnthusiast reviews. Builds country–variety and hierarchical networks to surface regional patterns and influence structures across the wine world.</p>
+
+    <div class="project-meta">
+      <span class="meta-tag">Solo</span>
+      <span class="meta-tag">NetworkX</span>
+      <span class="meta-tag">PageRank</span>
+      <span class="meta-tag">Network Analysis</span>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">Project Overview</div>
+      <p class="info-text">
+        • Network analysis of wine reviews and regional patterns<br>
+        • Country–variety bipartite networks<br>
+        • Hierarchical network construction<br>
+        • PageRank for influence ranking
+      </p>
+    </div>
+
+    <div class="button-group">
+      <a href="ns-wine-network.html" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        View Project
+      </a>
+    </div>
+  </div>
+
+  <div class="category-header">
+    <span class="category-label">Data & File Analysis</span>
+  </div>
+
+  <!-- Music Analyzer -->
+  <div class="project-card">
+    <div class="project-header">
+      <h2 class="project-title">Music Analyzer</h2>
+      <span class="date-badge">2025</span>
+    </div>
+    
+    <p class="project-desc">iTunes music library analysis tool. Parse and analyze music metadata including genre statistics, play history, longest/shortest songs, and release year trends from exported iTunes library files.</p>
+    
+    <div class="project-meta">
+      <span class="meta-tag">File Processing</span>
+      <span class="meta-tag">Data Analysis</span>
+      <span class="meta-tag">Dictionaries</span>
+      <span class="meta-tag">Text Parsing</span>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">Features</div>
+      <p class="info-text">
+        • Parse UTF-16 encoded iTunes library exports<br>
+        • Calculate total songs and play statistics<br>
+        • Group songs by release year<br>
+        • Analyze by genre (count, longest/shortest songs)<br>
+        • Track played vs unplayed songs
+      </p>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <span class="code-filename">music_analyzer.py (excerpt)</span>
+        <button class="code-copy" onclick="copyCode('musicCode')">Copy Code</button>
+      </div>
+      <div class="code-block">
+        <pre><code id="musicCode" class="language-python">def analyze_by_genre(songs_data):
+    genre_stats = {}
+
+    for song in songs_data:
+        genre = song.get("Genre", "").strip()
+        if genre:
+            time_length = int(song["Time"]) if song["Time"] else 0
+
+            if genre not in genre_stats:
+                genre_stats[genre] = {
+                    "count": 0,
+                    "longest": {"songs": [], "length": 0},
+                    "shortest": {"songs": [], "length": float("inf")}
+                }
+            
+            genre_stats[genre]["count"] += 1
+
+            # Track longest song
+            if time_length &gt; genre_stats[genre]["longest"]["length"]:
+                genre_stats[genre]["longest"]["length"] = time_length
+                genre_stats[genre]["longest"]["songs"] = [{"Name": song["Name"]}]
+
+            # Track shortest song
+            if time_length &lt; genre_stats[genre]["shortest"]["length"]:
+                genre_stats[genre]["shortest"]["length"] = time_length
+                genre_stats[genre]["shortest"]["songs"] = [{"Name": song["Name"]}]
+
+    for genre, stats in genre_stats.items():
+        print(f"Genre: {genre}")
+        print(f"Number of songs: {stats['count']}")
+        if stats["longest"]["songs"]:
+            for song in stats["longest"]["songs"]:
+                print(f"Longest: {song['Name']}")</code></pre>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <a href="https://replit.com/languages/python" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+        Run on Replit
+      </a>
+    </div>
+  </div>
+
+  <div class="category-header">
+    <span class="category-label">Practical Applications</span>
+  </div>
+
+  <!-- Flooring Estimator -->
+  <div class="project-card">
+    <div class="project-header">
+      <h2 class="project-title">Flooring Cost Estimator</h2>
+      <span class="date-badge">2025</span>
+    </div>
+    
+    <p class="project-desc">Interactive calculator for tile flooring installation costs. Calculates material costs (boxes of tiles) and labor charges based on floor dimensions, tile price, and hourly labor rate with comprehensive input validation.</p>
+    
+    <div class="project-meta">
+      <span class="meta-tag">Input Validation</span>
+      <span class="meta-tag">Math Operations</span>
+      <span class="meta-tag">Error Handling</span>
+      <span class="meta-tag">User Interface</span>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">Calculation Logic</div>
+      <p class="info-text">
+        • Square footage: length × width<br>
+        • Boxes needed: ⌈sq ft ÷ 25⌉ (using math.ceil)<br>
+        • Labor hours: (sq ft ÷ 50) × 1.5<br>
+        • Total cost: (boxes × price/box) + (hours × labor rate)<br>
+        • Comprehensive input validation with try/except
+      </p>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <span class="code-filename">flooringestimator.py</span>
+        <button class="code-copy" onclick="copyCode('flooringCode')">Copy Code</button>
+      </div>
+      <div class="code-block">
+        <pre><code id="flooringCode" class="language-python">import math
+
+def flooring_estimator():
+    print("Welcome. The program estimates the cost of a tile flooring installation")
+
+    do_estimation = True
+    while do_estimation:
+        
+        while True:
+            try:
+                length = float(input("Enter the length of the floor (in feet): "))
+                if length &lt;= 0:
+                    print("It must be a positive value. Try again.")
+                    continue
+            except ValueError:
+                print("Please enter a numeric value.")
+            else:
+                break
+
+        while True:
+            try:
+                width = float(input("Enter the width of the floor (in feet): "))
+                if width &lt;= 0:
+                    print("It must be a positive value. Try again.")
+                    continue
+            except ValueError:
+                print("Please enter a numeric value.")
+            else:
+                break
+
+        total_square_footage = length * width
+        boxes_of_tiles = math.ceil(total_square_footage / 25)  
+        hours_of_labor = (total_square_footage / 50) * 1.5
+        cost_of_tiles = boxes_of_tiles * price_per_box
+        labor_charges = hours_of_labor * labor_rate
+        total_cost = cost_of_tiles + labor_charges
+
+        print(f"The number of boxes of tiles required is: {boxes_of_tiles}")
+        print(f"The cost of tiles will be: ${cost_of_tiles:.2f}")
+        print(f"Labor charges are: ${labor_charges:.2f}")
+        print(f"Total cost will be: ${total_cost:.2f}\n")
+
+flooring_estimator()</code></pre>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <a href="https://replit.com/languages/python" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+        Run on Replit
+      </a>
+    </div>
+  </div>
+
+  <div class="category-header">
+    <span class="category-label">Object-Oriented Programming</span>
+  </div>
+
+  <!-- Book Collection -->
+  <div class="project-card">
+    <div class="project-header">
+      <h2 class="project-title">Book Collection Manager</h2>
+      <span class="date-badge">2025</span>
+    </div>
+    
+    <p class="project-desc">Interactive book collection management system using OOP principles. Manage book inventory with checkout/return functionality and persistent collection tracking using custom Book class with encapsulation.</p>
+    
+    <div class="project-meta">
+      <span class="meta-tag">OOP</span>
+      <span class="meta-tag">Classes</span>
+      <span class="meta-tag">Encapsulation</span>
+      <span class="meta-tag">State Management</span>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">Architecture</div>
+      <p class="info-text">
+        <strong>Book.py</strong> — Book class with private attributes (title, author, year, status) and methods for checkout, return, and info retrieval.<br><br>
+        <strong>bookCollection.py</strong> — Manager script using list of Book objects, interactive menu system, and collection tracking.
+      </p>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <span class="code-filename">Book.py</span>
+        <button class="code-copy" onclick="copyCode('bookCode')">Copy Code</button>
+      </div>
+      <div class="code-block">
+        <pre><code id="bookCode" class="language-python">class Book:
+
+    def __init__(self, title, author, year):
+        self.__title = title
+        self.__author = author
+        self.__year = year
+        self.__status = "available"
+
+    def check_out(self):
+        if self.__status == "available":
+           self.__status = "checked out"
+           return "The book has been checked out" 
+        else:
+            return "The book is not available"
+
+    def return_book(self):
+        if self.__status == "checked out":
+           self.__status = "available"
+           return "The book is returned and available for anyone to borrow"
+        else:
+            return "The book has not been checked out" 
+
+    def get_info(self):
+        return f"Title: {self.__title}\n Author: {self.__author}\n Year: {self.__year}\n Status: {self.__status}"</code></pre>
+      </div>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <span class="code-filename">bookCollection.py (excerpt)</span>
+        <button class="code-copy" onclick="copyCode('collectionCode')">Copy Code</button>
+      </div>
+      <div class="code-block">
+        <pre><code id="collectionCode" class="language-python">from Book import Book
+
+def main():
+    book_list = []
+
+    print("Welcome to the book collection manager!")
+    while True:
+        book_title = input("Enter the title of the book: ")
+        book_author = input("Enter the author of the book: ")
+        book_year = input("Enter the year of publication: ")
+
+        add_another_book = Book(book_title, book_author, book_year)
+        book_list.append(add_another_book)
+
+        while True:
+            print("What would you like to do with this book?")
+            print("1. Check out the book")
+            print("2. Return the book")
+            print("3. View the book information")
+            print("4. Add another book")
+            choice = input("Select a choice: ")
+
+            if choice == "1":
+                print(add_another_book.check_out())
+            elif choice == "2":
+                print(add_another_book.return_book())
+            elif choice == "3":
+                print("Book Information:")
+                print(add_another_book.get_info())
+            elif choice == "4":
+                break
+
+        repeat = input("Would you like to add another book? (y/n): ")
+        if repeat.lower() != "y":
+            break
+
+    print("Total book collection:")
+    for book in book_list:
+        print(book.get_info())</code></pre>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <a href="https://replit.com/languages/python" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+        Run on Replit
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+
+function copyCode(elementId) {
+  const codeElement = document.getElementById(elementId);
+  const text = codeElement.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = 'Copied!';
+    setTimeout(() => {
+      btn.innerText = originalText;
+    }, 2000);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  hljs.highlightAll();
+  
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+});
+</script>
+
+</body>
+</html>
