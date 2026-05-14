@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Projects — Mariano Cánovas</title>
+<meta name="description" content="SQL projects by Mariano Cánovas Martínez">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --bg-2: #ebebe8;
+    --surface: #ffffff;
+    --surface-tint: #f0f0ed;
+    --ink: #0a0a0a;
+    --muted: #5a5a58;
+    --dim: #8e8e8c;
+    --border: #e2e2df;
+    --accent: #e38c00;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  body.dark-mode {
+    --bg: #0d0d0d;
+    --bg-2: #161616;
+    --surface: #1a1a1a;
+    --surface-tint: #222222;
+    --ink: #f5f5f3;
+    --muted: #a0a0a0;
+    --dim: #666666;
+    --border: #2a2a2a;
+  }
+
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #ffffff; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* Top controls */
+  #top-controls {
+    position: fixed; top: 20px; right: 24px; z-index: 100;
+    display: flex; gap: 8px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* Header / nav */
+  .nav-bar {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    transform: translateX(-3px);
+  }
+
+  /* Page header */
+  .page-header {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 60px 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lang-badge {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: #e38c00;
+    color: white;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .page-title p {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* Project cards */
+  .content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+  }
+
+  .project {
+    display: block;
+    margin-bottom: 28px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  .project:nth-child(1) { animation-delay: 0.1s; }
+  .project:nth-child(2) { animation-delay: 0.2s; }
+  .project:not(.placeholder):hover { transform: translateY(-4px); }
+  .project-media {
+    width: 100%;
+    aspect-ratio: 16/10;
+    border-radius: 18px;
+    background: var(--surface-tint);
+    overflow: hidden;
+    margin-top: 14px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--dim);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+  }
+  .project-link-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1), background 0.3s, color 0.3s, box-shadow 0.3s;
+    z-index: 2;
+  }
+  .project:hover .project-link-badge {
+    transform: scale(1.08) rotate(-8deg);
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 16px rgba(227, 140, 0, 0.35);
+  }
+  .project:not(.placeholder):hover .project-media {
+    border-color: rgba(227, 140, 0, 0.4);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.08);
+  }
+  .project-media svg.illustration {
+    width: 100%; height: 100%;
+  }
+  .project-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .project-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(227, 140, 0, 0.12);
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .project-desc {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Footer */
+  footer {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 600px) {
+    .page-header { padding: 40px 20px 30px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 16px; }
+    .nav-bar { padding: 20px 20px 0; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top controls -->
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<!-- Back to home -->
+<nav class="nav-bar">
+  <a href="index.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to home
+  </a>
+</nav>
+
+<!-- Page header -->
+<header class="page-header">
+  <div class="lang-badge">SQL</div>
+  <div class="page-title">
+    <h1>SQL Projects</h1>
+    <p>Database queries, data manipulation, and analysis. Each project is interactive: run real queries in your browser.</p>
+  </div>
+</header>
+
+<!-- Projects -->
+<main class="content">
+
+  <!-- PROJECT 3: Hospital Management System -->
+  <a class="project" href="hospital-system.html">
+    <div class="project-title">
+      Hospital Management System
+      <span class="project-tag">Coursework</span>
+    </div>
+    <div class="project-desc">A relational schema for hospital administration: patients, doctors, rooms, billing, and inventory. Includes an interactive ER diagram and a patient's journey walkthrough.</div>
+    <div class="project-media">
+      <div class="project-link-badge" aria-label="View project">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l10-10M7 7h10v10"/></svg>
+      </div>
+      <svg class="illustration" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#dbeee5"/>
+            <stop offset="100%" stop-color="#b8d5c5"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="250" fill="url(#bg3)"/>
+
+        <!-- Subtle medical cross watermark in upper-right -->
+        <g transform="translate(360, 30)" opacity="0.18">
+          <rect x="-3" y="-10" width="6" height="20" rx="1" fill="#1a1a1a"/>
+          <rect x="-10" y="-3" width="20" height="6" rx="1" fill="#1a1a1a"/>
+        </g>
+
+        <!-- HOSPITAL top center -->
+        <g transform="translate(155, 15)">
+          <rect width="90" height="55" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Hospital</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Hospital_ID</text>
+            <text x="8" y="48">Hname</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- DOCTOR left -->
+        <g transform="translate(30, 100)">
+          <rect width="90" height="60" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Doctor</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Doctor_no</text>
+            <text x="8" y="48">Dname</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- PATIENT center (highlighted) -->
+        <g transform="translate(155, 100)">
+          <rect width="90" height="60" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#e38c00"/>
+          <rect y="14" width="90" height="6" fill="#e38c00"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Patient</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Patient_no</text>
+            <text x="8" y="48">Pname</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- ROOM right -->
+        <g transform="translate(280, 100)">
+          <rect width="90" height="60" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Room</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Room_no</text>
+            <text x="8" y="48">Availability</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- BILLS bottom center -->
+        <g transform="translate(155, 185)">
+          <rect width="90" height="55" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Bills</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Bills_no</text>
+            <text x="8" y="48">Amount</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- Relationships -->
+        <g stroke="#1a1a1a" stroke-width="1.2" fill="none">
+          <!-- PATIENT — ROOM (horizontal right) -->
+          <path d="M 245 130 L 280 130" />
+          <!-- DOCTOR — PATIENT (horizontal, indicates doctor-patient via diagnosis) -->
+          <path d="M 120 130 L 155 130" stroke-dasharray="3,3" stroke="#e38c00"/>
+          <!-- PATIENT — BILLS (vertical down) -->
+          <path d="M 200 160 L 200 185" />
+          <!-- HOSPITAL — PATIENT (vertical, subtle) -->
+          <path d="M 200 70 L 200 100" stroke-dasharray="3,3" opacity="0.5"/>
+        </g>
+      </svg>
+    </div>
+  </a>
+
+  <!-- PROJECT 1: Cinema Database Analytics -->
+  <a class="project" href="cinema-queries.html">
+    <div class="project-title">
+      Cinema Database Analytics
+      <span class="project-tag">Interactive</span>
+    </div>
+    <div class="project-desc">22 SQL queries on a cinema database: tickets, revenue, screening hours, voucher discounts. Run them live in your browser.</div>
+    <div class="project-media">
+      <div class="project-link-badge" aria-label="View project">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l10-10M7 7h10v10"/></svg>
+      </div>
+      <svg class="illustration" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#fde9c4"/>
+            <stop offset="100%" stop-color="#f5d9a0"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="250" fill="url(#bg1)"/>
+
+        <!-- Top row: Customer, Ticket, Screening -->
+        <g transform="translate(30, 40)">
+          <rect width="90" height="65" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#e38c00"/>
+          <rect y="14" width="90" height="6" fill="#e38c00"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Customer</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">Name</text>
+            <text x="8" y="62">City</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <g transform="translate(155, 40)">
+          <rect width="90" height="65" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Ticket</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">CustomerId</text>
+            <text x="8" y="62">Amount</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <g transform="translate(280, 40)">
+          <rect width="90" height="65" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Screening</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">MovieId</text>
+            <text x="8" y="62">Date</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- Bottom row: Actor, Cast, Movie -->
+        <g transform="translate(30, 145)">
+          <rect width="90" height="65" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#e38c00"/>
+          <rect y="14" width="90" height="6" fill="#e38c00"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Actor</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">Name</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <g transform="translate(155, 145)">
+          <rect width="90" height="65" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Cast</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">MovieId</text>
+            <text x="8" y="62">ActorId</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <g transform="translate(280, 145)">
+          <rect width="90" height="65" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#e38c00"/>
+          <rect y="14" width="90" height="6" fill="#e38c00"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Movie</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">Name</text>
+            <text x="8" y="62">Release</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- Relationships -->
+        <g stroke="#1a1a1a" stroke-width="1.2" fill="none">
+          <!-- top row horizontal: Customer-Ticket-Screening -->
+          <path d="M 120 72 L 155 72" />
+          <path d="M 245 72 L 280 72" />
+          <!-- bottom row horizontal: Movie-Cast-Actor -->
+          <path d="M 280 177 L 245 177" />
+          <path d="M 155 177 L 120 177" />
+          <!-- vertical: Screening down to Movie -->
+          <path d="M 325 105 L 325 145" stroke="#e38c00" stroke-dasharray="3,3"/>
+        </g>
+      </svg>
+    </div>
+  </a>
+
+  <!-- PROJECT 2: Invoicing Database Design -->
+  <a class="project" href="database-design.html">
+    <div class="project-title">
+      Invoicing Database Design
+      <span class="project-tag">Schema design</span>
+    </div>
+    <div class="project-desc">Designing a relational schema from scratch: tables, foreign keys, migrations, normalization, and a trigger for premium customers.</div>
+    <div class="project-media">
+      <div class="project-link-badge" aria-label="View project">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l10-10M7 7h10v10"/></svg>
+      </div>
+      <svg class="illustration" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#e8e8e3"/>
+            <stop offset="100%" stop-color="#d8d8d0"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="250" fill="url(#bg2)"/>
+
+        <!-- Customer table -->
+        <g transform="translate(40, 50)">
+          <rect width="90" height="80" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Customer</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">Name</text>
+            <text x="8" y="62">City</text>
+            <text x="8" y="76">Premium</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- Invoice table -->
+        <g transform="translate(155, 95)">
+          <rect width="90" height="90" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#e38c00"/>
+          <rect y="14" width="90" height="6" fill="#e38c00"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Invoice</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">CustomerId</text>
+            <text x="8" y="62">City</text>
+            <text x="8" y="76">Date</text>
+            <text x="8" y="86" fill="#e38c00">DeliveryId</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- InvoiceLine table -->
+        <g transform="translate(270, 50)">
+          <rect width="90" height="90" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#1a1a1a"/>
+          <rect y="14" width="90" height="6" fill="#1a1a1a"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="600" fill="#fff">InvoiceLine</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">InvoiceId</text>
+            <text x="8" y="62">ProductId</text>
+            <text x="8" y="76">Quantity</text>
+            <text x="8" y="86">Price</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- Product table -->
+        <g transform="translate(270, 165)">
+          <rect width="90" height="65" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#e38c00"/>
+          <rect y="14" width="90" height="6" fill="#e38c00"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Product</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">Description</text>
+            <text x="8" y="62">Price</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- Delivery table -->
+        <g transform="translate(40, 165)">
+          <rect width="90" height="65" rx="6" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.5"/>
+          <rect width="90" height="20" rx="6" fill="#e38c00"/>
+          <rect y="14" width="90" height="6" fill="#e38c00"/>
+          <text x="45" y="14" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff">Delivery</text>
+          <g font-family="JetBrains Mono, monospace" font-size="8" fill="#1a1a1a">
+            <text x="8" y="34">Id</text>
+            <text x="8" y="48">Status</text>
+            <text x="8" y="62">Date</text>
+          </g>
+          <circle cx="80" cy="32" r="2" fill="#e38c00"/>
+        </g>
+
+        <!-- Relations -->
+        <g stroke="#1a1a1a" stroke-width="1.2" fill="none">
+          <path d="M 130 90 L 155 110" />
+          <path d="M 245 110 L 270 90" />
+          <path d="M 130 195 L 155 165" stroke-dasharray="3,3" stroke="#e38c00"/>
+          <path d="M 270 195 L 245 165" stroke-dasharray="3,3" stroke="#e38c00"/>
+        </g>
+      </svg>
+    </div>
+  </a>
+
+</main>
+
+<!-- Footer -->
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display  = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+</script>
+
+</body>
+</html>

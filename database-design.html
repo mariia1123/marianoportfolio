@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoicing Database Design — Mariano Cánovas</title>
+<meta name="description" content="Designing a relational invoicing schema — tables, foreign keys, migrations, and triggers.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --bg-2: #ebebe8;
+    --surface: #ffffff;
+    --surface-tint: #f0f0ed;
+    --ink: #0a0a0a;
+    --muted: #5a5a58;
+    --dim: #8e8e8c;
+    --border: #e2e2df;
+    --accent: #e38c00;
+    --success: #16a34a;
+    --error: #dc2626;
+    --kw: #c026d3;
+    --str: #16a34a;
+    --num: #2563eb;
+    --cmt: #8e8e8c;
+    --fn:  #ca8a04;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  body.dark-mode {
+    --bg: #0d0d0d;
+    --bg-2: #161616;
+    --surface: #1a1a1a;
+    --surface-tint: #222222;
+    --ink: #f5f5f3;
+    --muted: #a0a0a0;
+    --dim: #666666;
+    --border: #2a2a2a;
+    --kw: #f0abfc;
+    --str: #86efac;
+    --num: #93c5fd;
+    --cmt: #6b7280;
+    --fn:  #fde68a;
+  }
+
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #fff; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s;
+    min-height: 100vh;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  #top-controls { position: fixed; top: 20px; right: 24px; z-index: 100; display: flex; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  .nav-bar { max-width: 920px; margin: 0 auto; padding: 28px 24px 0; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none; color: var(--muted);
+    font-size: 13px; font-weight: 500;
+    padding: 8px 14px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover { color: var(--ink); border-color: var(--ink); transform: translateX(-3px); }
+
+  .page-header {
+    max-width: 920px; margin: 0 auto;
+    padding: 50px 24px 30px;
+    display: flex; align-items: center; gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lang-badge {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--accent); color: white;
+    font-family: var(--mono); font-size: 18px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(28px, 5vw, 38px); font-weight: 700;
+    margin: 0 0 4px; letter-spacing: -0.02em;
+  }
+  .page-title p { font-size: 14px; color: var(--muted); margin: 0; }
+
+  .content { max-width: 920px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .section { margin-bottom: 56px; }
+  .section-header { display: flex; align-items: baseline; gap: 12px; margin: 0 0 18px; }
+  .section-num { font-family: var(--mono); font-size: 11px; color: var(--dim); font-weight: 500; }
+  .section-title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+  .section > p { color: var(--muted); font-size: 14px; margin: 0 0 16px; max-width: 64ch; }
+
+  .meta-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+  .chip {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+  }
+
+  /* Final schema visualization */
+  .schema-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .schema-table {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    font-family: var(--mono); font-size: 11px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .schema-table:hover {
+    transform: translateY(-2px); border-color: var(--accent);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+  .schema-table-name {
+    background: var(--ink); color: var(--bg);
+    padding: 8px 12px; font-weight: 600; font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+  .schema-columns { padding: 8px 12px; }
+  .schema-col {
+    display: flex; justify-content: space-between;
+    padding: 3px 0; color: var(--muted);
+  }
+  .schema-col .col-name { color: var(--ink); }
+  .schema-col.pk .col-name { color: var(--accent); font-weight: 600; }
+  .schema-col.fk .col-name::after { content: ' ↗'; color: var(--accent); }
+
+  /* Walkthrough steps */
+  .step {
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: 0; }
+  .step-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px;
+  }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 600;
+    color: var(--accent);
+    padding: 4px 10px;
+    background: rgba(227, 140, 0, 0.1);
+    border-radius: 6px;
+  }
+  .step-title {
+    font-size: 17px; font-weight: 600;
+    margin: 0; letter-spacing: -0.01em;
+  }
+  .code-toggle {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .code-toggle:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+  .code-toggle svg { flex-shrink: 0; }
+  .code-block.hidden { display: none; }
+  .step-desc {
+    font-size: 14px; color: var(--muted);
+    margin: 0 0 14px; max-width: 64ch;
+  }
+  .step-desc code {
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--surface-tint);
+    padding: 1px 6px; border-radius: 4px;
+    color: var(--ink);
+  }
+
+  .code-block {
+    margin: 0;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    overflow-x: auto;
+    color: var(--ink);
+    white-space: pre;
+  }
+  .code-block .kw { color: var(--kw); font-weight: 500; }
+  .code-block .str { color: var(--str); }
+  .code-block .num { color: var(--num); }
+  .code-block .cmt { color: var(--cmt); font-style: italic; }
+  .code-block .fn { color: var(--fn); }
+
+  /* Playground */
+  .playground {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .editor-toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: var(--surface-tint);
+    border-bottom: 1px solid var(--border);
+  }
+  .editor-toolbar .label {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--muted); letter-spacing: 0.04em;
+    text-transform: uppercase; margin-right: auto;
+  }
+  .btn {
+    font-family: var(--sans); font-size: 12px; font-weight: 500;
+    padding: 6px 12px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface); color: var(--ink);
+    cursor: pointer; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { border-color: var(--ink); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--ink); color: var(--bg); border-color: var(--ink);
+  }
+  .btn-primary:hover {
+    background: var(--accent); border-color: var(--accent); color: white;
+  }
+  body.dark-mode .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+  body.dark-mode .btn-primary:hover { filter: brightness(1.1); }
+
+  .editor {
+    width: 100%; min-height: 160px;
+    border: 0; outline: 0;
+    padding: 16px;
+    background: var(--surface); color: var(--ink);
+    font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    resize: vertical;
+  }
+  .editor::placeholder { color: var(--dim); }
+
+  .results { border-top: 1px solid var(--border); background: var(--bg-2); }
+  .results-status {
+    padding: 10px 16px;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .results-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); }
+  .results-status.ok .dot { background: var(--success); }
+  .results-status.err { color: var(--error); }
+  .results-status.err .dot { background: var(--error); }
+
+  .results-table-wrap { max-height: 360px; overflow: auto; }
+  .results-table {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .results-table th {
+    text-align: left; padding: 10px 14px;
+    background: var(--surface); color: var(--muted);
+    font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+  }
+  .results-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink);
+  }
+  .results-table tr:last-child td { border-bottom: 0; }
+  .results-table tr:hover td { background: var(--surface-tint); }
+  .results-empty {
+    padding: 40px 20px; text-align: center;
+    font-size: 13px; color: var(--dim); font-family: var(--mono);
+  }
+
+  /* Showcase queries */
+  .query-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 10px;
+    overflow: hidden; transition: border-color 0.2s;
+  }
+  .query-item:hover { border-color: var(--accent); }
+  .query-header {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    background: none; border: 0; cursor: pointer;
+    text-align: left; color: var(--ink);
+    transition: background 0.15s;
+  }
+  .query-header:hover { background: var(--surface-tint); }
+  .query-meta { display: flex; align-items: center; gap: 14px; }
+  .query-num {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--accent);
+    padding: 4px 8px;
+    background: rgba(227, 140, 0, 0.1);
+    border-radius: 6px; flex-shrink: 0;
+  }
+  .query-title { font-size: 14px; font-weight: 600; }
+  .chevron { color: var(--muted); transition: transform 0.25s; flex-shrink: 0; }
+  .query-item.open .chevron { transform: rotate(180deg); }
+  .query-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+  .query-item.open .query-body { max-height: 800px; }
+  .query-body .code-block { margin: 0; border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+  .query-actions {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 8px;
+    background: var(--surface);
+  }
+
+  /* Note */
+  .note {
+    background: rgba(227, 140, 0, 0.08);
+    border: 1px solid rgba(227, 140, 0, 0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 14px 0;
+  }
+  .note strong { color: var(--ink); }
+
+  footer {
+    max-width: 920px; margin: 0 auto;
+    padding: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 600px) {
+    .page-header { padding: 36px 20px 20px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 16px; }
+    .nav-bar { padding: 20px 20px 0; }
+    .content { padding: 0 20px 60px; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .editor-toolbar { flex-wrap: wrap; }
+    .editor-toolbar .label { width: 100%; margin-bottom: 4px; }
+    .schema-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<nav class="nav-bar">
+  <a href="sql.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to SQL projects
+  </a>
+</nav>
+
+<header class="page-header">
+  <div class="lang-badge">SQL</div>
+  <div class="page-title">
+    <h1>Invoicing Database Design</h1>
+    <p>Building a relational invoicing schema step by step — tables, foreign keys, migrations, and a trigger.</p>
+  </div>
+</header>
+
+<main class="content">
+
+  <!-- ABOUT -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">About this project</h2>
+    </div>
+    <p>Designing a relational schema for an invoicing system and then evolving it. The migrations add a product catalogue, customer addresses, deliveries and a premium-customer flag. Each section below follows a step from the original exercise.</p>
+    <div class="meta-chips">
+      <span class="chip">MySQL</span>
+      <span class="chip">Schema design</span>
+      <span class="chip">ALTER TABLE migrations</span>
+      <span class="chip">Triggers</span>
+    </div>
+  </section>
+
+  <!-- WALKTHROUGH -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">The walkthrough</h2>
+    </div>
+    <p>The exercise step by step. The SQL is hidden by default. Use the toggle on each step to view the statements.</p>
+  <article class="step">
+    <div class="step-header">
+      <span class="step-num">Q6</span>
+      <h3 class="step-title">Initial schema</h3>
+      <button class="code-toggle" onclick="toggleCode(this)" aria-label="Toggle code visibility">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M14 4l-4 16"/></svg>
+      <span>Show code</span>
+    </button>
+    </div>
+    <p class="step-desc">Three tables to start. Customer holds an identifier and a name. Invoice records which customer placed it, where, and when. InvoiceLine adds one row per item on each invoice.</p>
+    <pre class="code-block hidden"><code class="sql" data-sql="CREATE TABLE Customer (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    Name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (Id)
+);
+
+CREATE TABLE Invoice (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    CustomerId INT UNSIGNED NOT NULL,
+    City VARCHAR(255) NOT NULL,
+    Date DATETIME NOT NULL,
+    PRIMARY KEY (Id),
+    FOREIGN KEY (CustomerId) REFERENCES Customer(Id)
+);
+
+CREATE TABLE InvoiceLine (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    InvoiceId INT UNSIGNED NOT NULL,
+    Item INT UNSIGNED NOT NULL,
+    Quantity INT UNSIGNED NOT NULL,
+    Price DECIMAL(5, 2) UNSIGNED NOT NULL,
+    PRIMARY KEY (Id),
+    FOREIGN KEY (InvoiceId) REFERENCES Invoice(Id)
+);">CREATE TABLE Customer (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    Name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (Id)
+);
+
+CREATE TABLE Invoice (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    CustomerId INT UNSIGNED NOT NULL,
+    City VARCHAR(255) NOT NULL,
+    Date DATETIME NOT NULL,
+    PRIMARY KEY (Id),
+    FOREIGN KEY (CustomerId) REFERENCES Customer(Id)
+);
+
+CREATE TABLE InvoiceLine (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    InvoiceId INT UNSIGNED NOT NULL,
+    Item INT UNSIGNED NOT NULL,
+    Quantity INT UNSIGNED NOT NULL,
+    Price DECIMAL(5, 2) UNSIGNED NOT NULL,
+    PRIMARY KEY (Id),
+    FOREIGN KEY (InvoiceId) REFERENCES Invoice(Id)
+);</code></pre>
+  </article>
+
+  <article class="step">
+    <div class="step-header">
+      <span class="step-num">Q7</span>
+      <h3 class="step-title">Seed data</h3>
+      <button class="code-toggle" onclick="toggleCode(this)" aria-label="Toggle code visibility">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M14 4l-4 16"/></svg>
+      <span>Show code</span>
+    </button>
+    </div>
+    <p class="step-desc">Two customers, three invoices and six line items, enough to exercise the schema.</p>
+    <pre class="code-block hidden"><code class="sql" data-sql="INSERT INTO Customer (Name)
+VALUES (&#x27;George Holt&#x27;), (&#x27;Al Housten&#x27;);
+
+INSERT INTO Invoice (CustomerId, City, Date)
+VALUES (1, &#x27;Lancaster&#x27;, &#x27;2021-11-04&#x27;),
+       (2, &#x27;Riverside&#x27;, &#x27;2021-11-12&#x27;),
+       (1, &#x27;Victorville&#x27;, &#x27;2021-11-17&#x27;);
+
+INSERT INTO InvoiceLine (InvoiceId, Quantity, Item, Price)
+VALUES (1, 4, 4, 44.95),
+       (1, 2, 3, 29.95),
+       (2, 1, 4, 44.95),
+       (2, 7, 1, 19.95),
+       (2, 3, 2, 39.95),
+       (3, 2, 3, 29.95);">INSERT INTO Customer (Name)
+VALUES (&#x27;George Holt&#x27;), (&#x27;Al Housten&#x27;);
+
+INSERT INTO Invoice (CustomerId, City, Date)
+VALUES (1, &#x27;Lancaster&#x27;, &#x27;2021-11-04&#x27;),
+       (2, &#x27;Riverside&#x27;, &#x27;2021-11-12&#x27;),
+       (1, &#x27;Victorville&#x27;, &#x27;2021-11-17&#x27;);
+
+INSERT INTO InvoiceLine (InvoiceId, Quantity, Item, Price)
+VALUES (1, 4, 4, 44.95),
+       (1, 2, 3, 29.95),
+       (2, 1, 4, 44.95),
+       (2, 7, 1, 19.95),
+       (2, 3, 2, 39.95),
+       (3, 2, 3, 29.95);</code></pre>
+  </article>
+
+  <article class="step">
+    <div class="step-header">
+      <span class="step-num">Q8</span>
+      <h3 class="step-title">Design flaws to address</h3>
+      
+    </div>
+    <p class="step-desc">The schema has two weaknesses. First, there is no current customer address, since the city can only be inferred from a customer's last invoice and that may be stale for infrequent buyers. Second, there is no product catalogue, so item prices live on InvoiceLine and the current price has to be inferred from the last sale, which is expensive and wrong for rarely-sold items.</p>
+    
+  </article>
+
+  <article class="step">
+    <div class="step-header">
+      <span class="step-num">Q10</span>
+      <h3 class="step-title">Add a Product table</h3>
+      <button class="code-toggle" onclick="toggleCode(this)" aria-label="Toggle code visibility">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M14 4l-4 16"/></svg>
+      <span>Show code</span>
+    </button>
+    </div>
+    <p class="step-desc">Rename the loose Item column to a proper foreign key ProductId. A new Product table now holds the description, price and weight for each item.</p>
+    <pre class="code-block hidden"><code class="sql" data-sql="ALTER TABLE InvoiceLine CHANGE Item ProductId INT UNSIGNED NOT NULL;
+
+CREATE TABLE Product (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    Description VARCHAR(255) NOT NULL,
+    Price DECIMAL(5, 2) NOT NULL,
+    Weight INT UNSIGNED,
+    PRIMARY KEY (Id)
+);
+
+INSERT INTO Product (Description, Price, Weight)
+VALUES (&#x27;Phone Charger&#x27;, 19.95, 40),
+       (&#x27;Protective Phone Case&#x27;, 39.95, 35),
+       (&#x27;USB Charging Cable&#x27;, 29.95, 5),
+       (&#x27;HDMI Cable&#x27;, 44.95, 10);
+
+ALTER TABLE InvoiceLine ADD FOREIGN KEY (ProductId) REFERENCES Product(Id);">ALTER TABLE InvoiceLine CHANGE Item ProductId INT UNSIGNED NOT NULL;
+
+CREATE TABLE Product (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    Description VARCHAR(255) NOT NULL,
+    Price DECIMAL(5, 2) NOT NULL,
+    Weight INT UNSIGNED,
+    PRIMARY KEY (Id)
+);
+
+INSERT INTO Product (Description, Price, Weight)
+VALUES (&#x27;Phone Charger&#x27;, 19.95, 40),
+       (&#x27;Protective Phone Case&#x27;, 39.95, 35),
+       (&#x27;USB Charging Cable&#x27;, 29.95, 5),
+       (&#x27;HDMI Cable&#x27;, 44.95, 10);
+
+ALTER TABLE InvoiceLine ADD FOREIGN KEY (ProductId) REFERENCES Product(Id);</code></pre>
+  </article>
+
+  <article class="step">
+    <div class="step-header">
+      <span class="step-num">Q12</span>
+      <h3 class="step-title">Store the current city and add deliveries</h3>
+      <button class="code-toggle" onclick="toggleCode(this)" aria-label="Toggle code visibility">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M14 4l-4 16"/></svg>
+      <span>Show code</span>
+    </button>
+    </div>
+    <p class="step-desc">Add a City column to Customer, backfill it from the most recent invoice and then make it NOT NULL. A new Delivery table tracks shipment status, and each Invoice now links to its delivery.</p>
+    <pre class="code-block hidden"><code class="sql" data-sql="ALTER TABLE Customer ADD City VARCHAR(255);
+
+UPDATE Customer SET City = &#x27;Victorville&#x27; WHERE Id = 1;
+UPDATE Customer SET City = &#x27;Riverside&#x27;  WHERE Id = 2;
+
+ALTER TABLE Customer MODIFY City VARCHAR(255) NOT NULL;
+
+CREATE TABLE Delivery (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    City VARCHAR(255) NOT NULL,
+    Status ENUM(&#x27;Registered&#x27;, &#x27;In Transit&#x27;, &#x27;Complete&#x27;) NOT NULL,
+    Date DATETIME NOT NULL,
+    PRIMARY KEY (Id)
+);
+
+INSERT INTO Delivery (SELECT Id, City, &#x27;Complete&#x27; AS Status, Date FROM Invoice);
+
+ALTER TABLE Invoice
+    ADD DeliveryId INT UNSIGNED UNIQUE,
+    ADD FOREIGN KEY (DeliveryId) REFERENCES Delivery(Id);
+
+UPDATE Invoice SET DeliveryId = Id;">ALTER TABLE Customer ADD City VARCHAR(255);
+
+UPDATE Customer SET City = &#x27;Victorville&#x27; WHERE Id = 1;
+UPDATE Customer SET City = &#x27;Riverside&#x27;  WHERE Id = 2;
+
+ALTER TABLE Customer MODIFY City VARCHAR(255) NOT NULL;
+
+CREATE TABLE Delivery (
+    Id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    City VARCHAR(255) NOT NULL,
+    Status ENUM(&#x27;Registered&#x27;, &#x27;In Transit&#x27;, &#x27;Complete&#x27;) NOT NULL,
+    Date DATETIME NOT NULL,
+    PRIMARY KEY (Id)
+);
+
+INSERT INTO Delivery (SELECT Id, City, &#x27;Complete&#x27; AS Status, Date FROM Invoice);
+
+ALTER TABLE Invoice
+    ADD DeliveryId INT UNSIGNED UNIQUE,
+    ADD FOREIGN KEY (DeliveryId) REFERENCES Delivery(Id);
+
+UPDATE Invoice SET DeliveryId = Id;</code></pre>
+  </article>
+
+  <article class="step">
+    <div class="step-header">
+      <span class="step-num">Q14</span>
+      <h3 class="step-title">Premium customer flag with a trigger</h3>
+      <button class="code-toggle" onclick="toggleCode(this)" aria-label="Toggle code visibility">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M14 4l-4 16"/></svg>
+      <span>Show code</span>
+    </button>
+    </div>
+    <p class="step-desc">Mark a customer as Premium once they have more than two invoices. An AFTER INSERT trigger on Invoice recounts and updates the flag on every new insert.</p>
+    <pre class="code-block hidden"><code class="sql" data-sql="ALTER TABLE Customer ADD Premium BOOLEAN NOT NULL DEFAULT 0;
+
+CREATE TRIGGER CheckPremium AFTER INSERT ON Invoice
+FOR EACH ROW
+UPDATE Customer
+SET Premium = (
+    SELECT IF(COUNT(Id) &gt; 2, 1, 0)
+    FROM Invoice
+    WHERE CustomerId = NEW.CustomerId
+)
+WHERE Id = NEW.CustomerId;">ALTER TABLE Customer ADD Premium BOOLEAN NOT NULL DEFAULT 0;
+
+CREATE TRIGGER CheckPremium AFTER INSERT ON Invoice
+FOR EACH ROW
+UPDATE Customer
+SET Premium = (
+    SELECT IF(COUNT(Id) &gt; 2, 1, 0)
+    FROM Invoice
+    WHERE CustomerId = NEW.CustomerId
+)
+WHERE Id = NEW.CustomerId;</code></pre>
+  </article>
+
+  <article class="step">
+    <div class="step-header">
+      <span class="step-num">Q15</span>
+      <h3 class="step-title">Trigger test</h3>
+      <button class="code-toggle" onclick="toggleCode(this)" aria-label="Toggle code visibility">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M14 4l-4 16"/></svg>
+      <span>Show code</span>
+    </button>
+    </div>
+    <p class="step-desc">Insert a third invoice for customer 1, and the trigger promotes them to Premium.</p>
+    <pre class="code-block hidden"><code class="sql" data-sql="INSERT INTO Invoice (CustomerId, City, Date)
+VALUES (1, &#x27;Victorville&#x27;, &#x27;2021-11-17&#x27;);">INSERT INTO Invoice (CustomerId, City, Date)
+VALUES (1, &#x27;Victorville&#x27;, &#x27;2021-11-17&#x27;);</code></pre>
+  </article>
+  </section>
+
+  <!-- PLAYGROUND -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Playground</h2>
+    </div>
+    <p>The final schema is loaded with the seed data already inserted. Write your own query or pick one from the samples below, then use <kbd>Cmd/Ctrl + Enter</kbd> to run.</p>
+    <div class="playground">
+      <div class="editor-toolbar">
+        <span class="label">SQL Editor</span>
+        <button class="btn" onclick="clearEditor()">Clear</button>
+        <button class="btn" onclick="resetDatabase()">Reset DB</button>
+        <button class="btn btn-primary" onclick="runQuery()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Run
+        </button>
+      </div>
+      <textarea class="editor" id="editor" spellcheck="false" placeholder="-- Try a query against the invoicing schema">SELECT Name, City, Premium FROM Customer;</textarea>
+      <div class="results">
+        <div class="results-status" id="status">
+          <span class="dot"></span>
+          <span id="status-text">Loading database…</span>
+        </div>
+        <div class="results-table-wrap" id="results">
+          <div class="results-empty">Run a query to see results.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAMPLE QUERIES -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Sample queries</h2>
+    </div>
+    <p>A few queries that exercise the final schema with joins across all five tables.</p>
+    <div class="query-list">
+  <article class="query-item">
+    <button class="query-header" onclick="toggleQuery(0)" aria-expanded="false">
+      <div class="query-meta">
+        <span class="query-num">SQ1</span>
+        <div><div class="query-title">All customers and Premium status</div></div>
+      </div>
+      <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="query-body" id="query-body-0">
+      <pre class="code-block"><code class="sql" data-sql="SELECT Name, City, Premium FROM Customer;">SELECT Name, City, Premium FROM Customer;</code></pre>
+      <div class="query-actions">
+        <button class="btn btn-primary" onclick="loadQueryIntoEditor(0)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Run in playground
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <article class="query-item">
+    <button class="query-header" onclick="toggleQuery(1)" aria-expanded="false">
+      <div class="query-meta">
+        <span class="query-num">SQ2</span>
+        <div><div class="query-title">Invoices with customer name and delivery status</div></div>
+      </div>
+      <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="query-body" id="query-body-1">
+      <pre class="code-block"><code class="sql" data-sql="SELECT
+    Invoice.Id,
+    Customer.Name,
+    Invoice.Date,
+    Delivery.Status
+FROM
+    Invoice
+    INNER JOIN Customer ON Invoice.CustomerId = Customer.Id
+    INNER JOIN Delivery ON Invoice.DeliveryId = Delivery.Id
+ORDER BY
+    Invoice.Date;">SELECT
+    Invoice.Id,
+    Customer.Name,
+    Invoice.Date,
+    Delivery.Status
+FROM
+    Invoice
+    INNER JOIN Customer ON Invoice.CustomerId = Customer.Id
+    INNER JOIN Delivery ON Invoice.DeliveryId = Delivery.Id
+ORDER BY
+    Invoice.Date;</code></pre>
+      <div class="query-actions">
+        <button class="btn btn-primary" onclick="loadQueryIntoEditor(1)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Run in playground
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <article class="query-item">
+    <button class="query-header" onclick="toggleQuery(2)" aria-expanded="false">
+      <div class="query-meta">
+        <span class="query-num">SQ3</span>
+        <div><div class="query-title">Total revenue per invoice</div></div>
+      </div>
+      <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="query-body" id="query-body-2">
+      <pre class="code-block"><code class="sql" data-sql="SELECT
+    Invoice.Id AS Invoice,
+    Customer.Name,
+    ROUND(SUM(InvoiceLine.Quantity * InvoiceLine.Price), 2) AS Total
+FROM
+    Invoice
+    INNER JOIN Customer ON Invoice.CustomerId = Customer.Id
+    INNER JOIN InvoiceLine ON InvoiceLine.InvoiceId = Invoice.Id
+GROUP BY
+    Invoice.Id
+ORDER BY
+    Total DESC;">SELECT
+    Invoice.Id AS Invoice,
+    Customer.Name,
+    ROUND(SUM(InvoiceLine.Quantity * InvoiceLine.Price), 2) AS Total
+FROM
+    Invoice
+    INNER JOIN Customer ON Invoice.CustomerId = Customer.Id
+    INNER JOIN InvoiceLine ON InvoiceLine.InvoiceId = Invoice.Id
+GROUP BY
+    Invoice.Id
+ORDER BY
+    Total DESC;</code></pre>
+      <div class="query-actions">
+        <button class="btn btn-primary" onclick="loadQueryIntoEditor(2)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Run in playground
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <article class="query-item">
+    <button class="query-header" onclick="toggleQuery(3)" aria-expanded="false">
+      <div class="query-meta">
+        <span class="query-num">SQ4</span>
+        <div><div class="query-title">Best-selling products by quantity</div></div>
+      </div>
+      <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="query-body" id="query-body-3">
+      <pre class="code-block"><code class="sql" data-sql="SELECT
+    Product.Description,
+    SUM(InvoiceLine.Quantity) AS Sold,
+    ROUND(SUM(InvoiceLine.Quantity * InvoiceLine.Price), 2) AS Revenue
+FROM
+    InvoiceLine
+    INNER JOIN Product ON InvoiceLine.ProductId = Product.Id
+GROUP BY
+    Product.Id
+ORDER BY
+    Sold DESC;">SELECT
+    Product.Description,
+    SUM(InvoiceLine.Quantity) AS Sold,
+    ROUND(SUM(InvoiceLine.Quantity * InvoiceLine.Price), 2) AS Revenue
+FROM
+    InvoiceLine
+    INNER JOIN Product ON InvoiceLine.ProductId = Product.Id
+GROUP BY
+    Product.Id
+ORDER BY
+    Sold DESC;</code></pre>
+      <div class="query-actions">
+        <button class="btn btn-primary" onclick="loadQueryIntoEditor(3)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Run in playground
+        </button>
+      </div>
+    </div>
+  </article>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<script type="text/sql" id="invoicing-schema">
+-- Final schema after all migrations from Q6 through Q15.
+-- Adapted for SQLite (in-browser engine).
+
+CREATE TABLE Customer (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    City TEXT NOT NULL,
+    Premium INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE Delivery (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    City TEXT NOT NULL,
+    Status TEXT NOT NULL CHECK (Status IN ('Registered', 'In Transit', 'Complete')),
+    Date TEXT NOT NULL
+);
+
+CREATE TABLE Invoice (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    CustomerId INTEGER NOT NULL,
+    City TEXT NOT NULL,
+    Date TEXT NOT NULL,
+    DeliveryId INTEGER UNIQUE,
+    FOREIGN KEY (CustomerId) REFERENCES Customer(Id),
+    FOREIGN KEY (DeliveryId) REFERENCES Delivery(Id)
+);
+
+CREATE TABLE Product (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Description TEXT NOT NULL,
+    Price REAL NOT NULL,
+    Weight INTEGER
+);
+
+CREATE TABLE InvoiceLine (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    InvoiceId INTEGER NOT NULL,
+    ProductId INTEGER NOT NULL,
+    Quantity INTEGER NOT NULL,
+    Price REAL NOT NULL,
+    FOREIGN KEY (InvoiceId) REFERENCES Invoice(Id),
+    FOREIGN KEY (ProductId) REFERENCES Product(Id)
+);
+
+-- Seed data
+INSERT INTO Customer (Name, City, Premium) VALUES
+    ('George Holt', 'Victorville', 1),
+    ('Al Housten',  'Riverside',   0);
+
+INSERT INTO Product (Description, Price, Weight) VALUES
+    ('Phone Charger',         19.95, 40),
+    ('Protective Phone Case', 39.95, 35),
+    ('USB Charging Cable',    29.95,  5),
+    ('HDMI Cable',            44.95, 10);
+
+INSERT INTO Delivery (City, Status, Date) VALUES
+    ('Lancaster',   'Complete', '2021-11-04'),
+    ('Riverside',   'Complete', '2021-11-12'),
+    ('Victorville', 'Complete', '2021-11-17'),
+    ('Victorville', 'Complete', '2021-11-17');
+
+INSERT INTO Invoice (CustomerId, City, Date, DeliveryId) VALUES
+    (1, 'Lancaster',   '2021-11-04', 1),
+    (2, 'Riverside',   '2021-11-12', 2),
+    (1, 'Victorville', '2021-11-17', 3),
+    (1, 'Victorville', '2021-11-17', 4);
+
+INSERT INTO InvoiceLine (InvoiceId, ProductId, Quantity, Price) VALUES
+    (1, 4, 4, 44.95),
+    (1, 3, 2, 29.95),
+    (2, 4, 1, 44.95),
+    (2, 1, 7, 19.95),
+    (2, 2, 3, 39.95),
+    (3, 3, 2, 29.95);
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display  = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+
+const SAMPLE_QUERIES = {"0": "SELECT Name, City, Premium FROM Customer;", "1": "SELECT\n    Invoice.Id,\n    Customer.Name,\n    Invoice.Date,\n    Delivery.Status\nFROM\n    Invoice\n    INNER JOIN Customer ON Invoice.CustomerId = Customer.Id\n    INNER JOIN Delivery ON Invoice.DeliveryId = Delivery.Id\nORDER BY\n    Invoice.Date;", "2": "SELECT\n    Invoice.Id AS Invoice,\n    Customer.Name,\n    ROUND(SUM(InvoiceLine.Quantity * InvoiceLine.Price), 2) AS Total\nFROM\n    Invoice\n    INNER JOIN Customer ON Invoice.CustomerId = Customer.Id\n    INNER JOIN InvoiceLine ON InvoiceLine.InvoiceId = Invoice.Id\nGROUP BY\n    Invoice.Id\nORDER BY\n    Total DESC;", "3": "SELECT\n    Product.Description,\n    SUM(InvoiceLine.Quantity) AS Sold,\n    ROUND(SUM(InvoiceLine.Quantity * InvoiceLine.Price), 2) AS Revenue\nFROM\n    InvoiceLine\n    INNER JOIN Product ON InvoiceLine.ProductId = Product.Id\nGROUP BY\n    Product.Id\nORDER BY\n    Sold DESC;"};
+
+function mysqlToSqlite(sql) {
+  sql = sql.replace(/\bYEAR\s*\(((?:[^()]|\([^()]*\))+)\)/gi,
+    (_, inner) => `CAST(strftime('%Y', ${inner}) AS INTEGER)`);
+  sql = sql.replace(/\bMONTH\s*\(((?:[^()]|\([^()]*\))+)\)/gi,
+    (_, inner) => `CAST(strftime('%m', ${inner}) AS INTEGER)`);
+  sql = sql.replace(/\bDAY\s*\(((?:[^()]|\([^()]*\))+)\)/gi,
+    (_, inner) => `CAST(strftime('%d', ${inner}) AS INTEGER)`);
+  sql = sql.replace(/\bDATEDIFF\s*\(((?:[^()]|\([^()]*\))+)\)/gi, (_, inner) => {
+    let depth = 0;
+    for (let i = 0; i < inner.length; i++) {
+      const c = inner[i];
+      if (c === '(') depth++;
+      else if (c === ')') depth--;
+      else if (c === ',' && depth === 0) {
+        return `CAST(julianday(${inner.slice(0,i).trim()}) - julianday(${inner.slice(i+1).trim()}) AS INTEGER)`;
+      }
+    }
+    return _;
+  });
+  sql = sql.replace(/\bIF\s*\(/g, 'iif(');
+  return sql;
+}
+
+let db = null;
+let SQL = null;
+
+async function initDb() {
+  try {
+    SQL = await initSqlJs({
+      locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
+    });
+    resetDatabase();
+    setStatus('ok', 'Database ready · schema loaded');
+  } catch (e) {
+    setStatus('err', 'Failed to load database: ' + e.message);
+  }
+}
+
+function resetDatabase() {
+  if (!SQL) return;
+  db = new SQL.Database();
+  db.exec(document.getElementById('invoicing-schema').textContent);
+  setStatus('ok', 'Database reset · ready');
+}
+
+function setStatus(kind, text) {
+  const s = document.getElementById('status');
+  s.className = 'results-status ' + (kind || '');
+  document.getElementById('status-text').textContent = text;
+}
+
+function clearEditor() {
+  document.getElementById('editor').value = '';
+  document.getElementById('editor').focus();
+}
+
+function runQuery() {
+  if (!db) { setStatus('err', 'Database not ready yet'); return; }
+  const raw = document.getElementById('editor').value.trim();
+  if (!raw) { setStatus('', 'Editor is empty'); return; }
+  const adapted = mysqlToSqlite(raw);
+  try {
+    const results = db.exec(adapted);
+    renderResults(results);
+  } catch (e) {
+    renderError(e.message);
+  }
+}
+
+function renderResults(results) {
+  const container = document.getElementById('results');
+  if (!results || results.length === 0) {
+    container.innerHTML = '<div class="results-empty">Query OK — no rows returned.</div>';
+    setStatus('ok', 'Executed · 0 rows');
+    return;
+  }
+  const r = results[results.length - 1];
+  const cols = r.columns, rows = r.values;
+  let html = '<table class="results-table"><thead><tr>';
+  cols.forEach(c => html += `<th>${escapeHtml(String(c))}</th>`);
+  html += '</tr></thead><tbody>';
+  const limit = Math.min(rows.length, 200);
+  for (let i = 0; i < limit; i++) {
+    html += '<tr>';
+    rows[i].forEach(v => {
+      const display = v === null ? '<em style="color:var(--dim)">NULL</em>' : escapeHtml(String(v));
+      html += `<td>${display}</td>`;
+    });
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  const more = rows.length > limit ? ` (showing first ${limit})` : '';
+  setStatus('ok', `Executed · ${rows.length} row${rows.length === 1 ? '' : 's'}${more}`);
+}
+
+function renderError(msg) {
+  document.getElementById('results').innerHTML =
+    `<div class="results-empty" style="color: var(--error); text-align: left; padding: 16px; font-size: 12.5px; line-height: 1.5;">${escapeHtml(msg)}</div>`;
+  setStatus('err', 'Error');
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function toggleQuery(i) {
+  const item = document.getElementById('query-body-' + i).parentElement;
+  const isOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  item.querySelector('.query-header').setAttribute('aria-expanded', String(!isOpen));
+}
+
+function toggleCode(btn) {
+  const step = btn.closest('.step');
+  const block = step.querySelector('.code-block');
+  if (!block) return;
+  const isHidden = block.classList.toggle('hidden');
+  btn.querySelector('span').textContent = isHidden ? 'Show code' : 'Hide code';
+}
+
+function loadQueryIntoEditor(i) {
+  const sql = SAMPLE_QUERIES[i];
+  if (!sql) return;
+  document.getElementById('editor').value = sql;
+  document.querySelector('.playground').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(runQuery, 400);
+}
+
+document.getElementById('editor').addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runQuery();
+  }
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.slice(0, start) + '    ' + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + 4;
+  }
+});
+
+const SQL_KEYWORDS = /\b(SELECT|FROM|WHERE|GROUP BY|ORDER BY|HAVING|JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|OUTER JOIN|ON|AS|AND|OR|NOT|IN|BETWEEN|LIKE|IS|NULL|DISTINCT|COUNT|SUM|AVG|MIN|MAX|ROUND|CASE|WHEN|THEN|ELSE|END|UNION|ALL|EXISTS|LIMIT|OFFSET|ASC|DESC|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|ALTER|DROP|PRIMARY|KEY|FOREIGN|REFERENCES|UNIQUE|DEFAULT|AUTOINCREMENT|AUTO_INCREMENT|UNSIGNED|INT|INTEGER|VARCHAR|TEXT|DECIMAL|REAL|DATETIME|DATE|BOOLEAN|ENUM|IF|YEAR|MONTH|DAY|DATEDIFF|CAST|STRFTIME|CHECK|MODIFY|ADD|CHANGE|TRIGGER|AFTER|BEFORE|FOR|EACH|ROW|NEW|OLD)\b/gi;
+
+function highlightSql(code) {
+  const placeholders = [];
+  code = code.replace(/'[^']*'/g, m => {
+    placeholders.push(`<span class="str">${escapeHtml(m)}</span>`);
+    return `\x00${placeholders.length - 1}\x00`;
+  });
+  code = code.replace(/--[^\n]*/g, m => {
+    placeholders.push(`<span class="cmt">${escapeHtml(m)}</span>`);
+    return `\x00${placeholders.length - 1}\x00`;
+  });
+  code = code.replace(/#[^\n]*/g, m => {
+    placeholders.push(`<span class="cmt">${escapeHtml(m)}</span>`);
+    return `\x00${placeholders.length - 1}\x00`;
+  });
+  code = escapeHtml(code);
+  code = code.replace(/\b\d+(\.\d+)?\b/g, m => `<span class="num">${m}</span>`);
+  code = code.replace(SQL_KEYWORDS, m => `<span class="kw">${m.toUpperCase()}</span>`);
+  code = code.replace(/\x00(\d+)\x00/g, (_, i) => placeholders[parseInt(i)]);
+  return code;
+}
+
+document.querySelectorAll('.code-block code.sql').forEach(el => {
+  const raw = el.getAttribute('data-sql') || el.textContent;
+  el.innerHTML = highlightSql(raw);
+});
+
+initDb();
+</script>
+
+</body>
+</html>

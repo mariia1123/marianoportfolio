@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cinema Database Analytics — Mariano Cánovas</title>
+<meta name="description" content="Interactive SQL playground for a cinema database with 22 analytical queries.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --bg-2: #ebebe8;
+    --surface: #ffffff;
+    --surface-tint: #f0f0ed;
+    --ink: #0a0a0a;
+    --muted: #5a5a58;
+    --dim: #8e8e8c;
+    --border: #e2e2df;
+    --accent: #e38c00;
+    --success: #16a34a;
+    --error: #dc2626;
+    --kw: #c026d3;    /* keywords */
+    --str: #16a34a;   /* strings */
+    --num: #2563eb;   /* numbers */
+    --cmt: #8e8e8c;   /* comments */
+    --fn:  #ca8a04;   /* functions */
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  body.dark-mode {
+    --bg: #0d0d0d;
+    --bg-2: #161616;
+    --surface: #1a1a1a;
+    --surface-tint: #222222;
+    --ink: #f5f5f3;
+    --muted: #a0a0a0;
+    --dim: #666666;
+    --border: #2a2a2a;
+    --kw: #f0abfc;
+    --str: #86efac;
+    --num: #93c5fd;
+    --cmt: #6b7280;
+    --fn:  #fde68a;
+  }
+
+  * { box-sizing: border-box; }
+  *::selection { background: #22c55e; color: #ffffff; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.4s, color 0.4s;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* Top controls */
+  #top-controls {
+    position: fixed; top: 20px; right: 24px; z-index: 100;
+    display: flex; gap: 8px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+  .nav-bar {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .back-link:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+    transform: translateX(-3px);
+  }
+
+  .page-header {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 50px 24px 30px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lang-badge {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: white;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    flex-shrink: 0;
+  }
+  .page-title h1 {
+    font-size: clamp(28px, 5vw, 38px);
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .page-title p {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .content {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* Sections */
+  .section { margin-bottom: 56px; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 18px;
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    font-weight: 500;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .section p {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0 0 16px;
+    max-width: 64ch;
+  }
+
+  /* About chips */
+  .meta-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 14px 0 0;
+  }
+  .chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* Schema visualization */
+  .schema-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .schema-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 11px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .schema-table:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    border-color: var(--accent);
+  }
+  .schema-table-name {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+  .schema-columns { padding: 8px 12px; }
+  .schema-col {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    color: var(--muted);
+  }
+  .schema-col .col-name { color: var(--ink); }
+  .schema-col.pk .col-name { color: var(--accent); font-weight: 600; }
+  .schema-col.fk .col-name::after { content: ' ↗'; color: var(--accent); }
+
+  /* Playground */
+  .playground {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--surface-tint);
+    border-bottom: 1px solid var(--border);
+  }
+  .editor-toolbar .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-right: auto;
+  }
+  .btn {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { border-color: var(--ink); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .btn-primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  body.dark-mode .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+  body.dark-mode .btn-primary:hover { filter: brightness(1.1); }
+
+  .editor {
+    width: 100%;
+    min-height: 180px;
+    border: 0;
+    outline: 0;
+    padding: 16px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+  .editor::placeholder { color: var(--dim); }
+
+  .results {
+    border-top: 1px solid var(--border);
+    background: var(--bg-2);
+  }
+  .results-status {
+    padding: 10px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .results-status .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--dim);
+  }
+  .results-status.ok .dot { background: var(--success); }
+  .results-status.err { color: var(--error); }
+  .results-status.err .dot { background: var(--error); }
+
+  .results-table-wrap {
+    max-height: 360px;
+    overflow: auto;
+  }
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .results-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+  }
+  .results-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink);
+  }
+  .results-table tr:last-child td { border-bottom: 0; }
+  .results-table tr:hover td { background: var(--surface-tint); }
+  .results-empty {
+    padding: 40px 20px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--dim);
+    font-family: var(--mono);
+  }
+
+  /* Queries showcase */
+  .query-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .query-item:hover { border-color: var(--accent); }
+  .query-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+  .query-header:hover { background: var(--surface-tint); }
+  .query-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .query-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    padding: 4px 8px;
+    background: rgba(227, 140, 0, 0.1);
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .query-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .query-desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .chevron {
+    color: var(--muted);
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+  .query-item.open .chevron { transform: rotate(180deg); }
+  .query-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .query-item.open .query-body { max-height: 800px; }
+
+  .code-block {
+    margin: 0;
+    padding: 16px 18px;
+    background: var(--bg-2);
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    overflow-x: auto;
+    color: var(--ink);
+    white-space: pre;
+  }
+  .code-block .kw { color: var(--kw); font-weight: 500; }
+  .code-block .str { color: var(--str); }
+  .code-block .num { color: var(--num); }
+  .code-block .cmt { color: var(--cmt); font-style: italic; }
+  .code-block .fn { color: var(--fn); }
+
+  .query-actions {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    background: var(--surface);
+  }
+
+  /* Note box */
+  .note {
+    background: rgba(227, 140, 0, 0.08);
+    border: 1px solid rgba(227, 140, 0, 0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 14px 0;
+  }
+  .note strong { color: var(--ink); }
+
+  /* Footer */
+  footer {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 600px) {
+    .page-header { padding: 36px 20px 20px; }
+    .lang-badge { width: 48px; height: 48px; font-size: 16px; }
+    .nav-bar { padding: 20px 20px 0; }
+    .content { padding: 0 20px 60px; }
+    #top-controls { top: 14px; right: 14px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .editor-toolbar { flex-wrap: wrap; }
+    .editor-toolbar .label { width: 100%; margin-bottom: 4px; }
+    .schema-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .query-meta { gap: 10px; }
+    .query-header { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+
+<nav class="nav-bar">
+  <a href="sql.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to SQL projects
+  </a>
+</nav>
+
+<header class="page-header">
+  <div class="lang-badge">SQL</div>
+  <div class="page-title">
+    <h1>Cinema Database Analytics</h1>
+    <p>22 analytical queries on a cinema reservation system — runnable live in your browser.</p>
+  </div>
+</header>
+
+<main class="content">
+
+  <!-- ABOUT -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">About this project</h2>
+    </div>
+    <p>A cinema reservation database with eight tables and over 235 rows of data. The 22 queries below explore tickets, revenue, screening hours and voucher use through joins, aggregations and subqueries.</p>
+    <div class="meta-chips">
+      <span class="chip">MySQL</span>
+      <span class="chip">8 tables · 235+ rows</span>
+      <span class="chip">22 queries</span>
+      <span class="chip">JOIN · GROUP BY · subqueries</span>
+    </div>
+  </section>
+
+  <!-- SCHEMA -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Schema</h2>
+    </div>
+    <p>Eight tables linked by foreign keys. Tickets connect customers to screenings, screenings link movies to rooms, and the Cast table joins movies with their actors.</p>
+    <div class="schema-grid">
+      <div class="schema-table">
+        <div class="schema-table-name">Customer</div>
+        <div class="schema-columns">
+          <div class="schema-col pk"><span class="col-name">Id</span><span>INT</span></div>
+          <div class="schema-col"><span class="col-name">Name</span><span>TEXT</span></div>
+          <div class="schema-col"><span class="col-name">City</span><span>TEXT</span></div>
+        </div>
+      </div>
+      <div class="schema-table">
+        <div class="schema-table-name">Actor</div>
+        <div class="schema-columns">
+          <div class="schema-col pk"><span class="col-name">Id</span><span>INT</span></div>
+          <div class="schema-col"><span class="col-name">Name</span><span>TEXT</span></div>
+        </div>
+      </div>
+      <div class="schema-table">
+        <div class="schema-table-name">Movie</div>
+        <div class="schema-columns">
+          <div class="schema-col pk"><span class="col-name">Id</span><span>INT</span></div>
+          <div class="schema-col"><span class="col-name">Name</span><span>TEXT</span></div>
+          <div class="schema-col"><span class="col-name">Release</span><span>DATE</span></div>
+          <div class="schema-col"><span class="col-name">Duration</span><span>INT</span></div>
+        </div>
+      </div>
+      <div class="schema-table">
+        <div class="schema-table-name">Cast</div>
+        <div class="schema-columns">
+          <div class="schema-col pk"><span class="col-name">Id</span><span>INT</span></div>
+          <div class="schema-col fk"><span class="col-name">MovieId</span><span>FK</span></div>
+          <div class="schema-col fk"><span class="col-name">ActorId</span><span>FK</span></div>
+        </div>
+      </div>
+      <div class="schema-table">
+        <div class="schema-table-name">Room</div>
+        <div class="schema-columns">
+          <div class="schema-col pk"><span class="col-name">Id</span><span>INT</span></div>
+          <div class="schema-col"><span class="col-name">System</span><span>TEXT</span></div>
+        </div>
+      </div>
+      <div class="schema-table">
+        <div class="schema-table-name">Screening</div>
+        <div class="schema-columns">
+          <div class="schema-col pk"><span class="col-name">Id</span><span>INT</span></div>
+          <div class="schema-col fk"><span class="col-name">MovieId</span><span>FK</span></div>
+          <div class="schema-col fk"><span class="col-name">RoomId</span><span>FK</span></div>
+          <div class="schema-col"><span class="col-name">Date</span><span>DATETIME</span></div>
+          <div class="schema-col"><span class="col-name">Price</span><span>DECIMAL</span></div>
+        </div>
+      </div>
+      <div class="schema-table">
+        <div class="schema-table-name">Voucher</div>
+        <div class="schema-columns">
+          <div class="schema-col pk"><span class="col-name">Id</span><span>INT</span></div>
+          <div class="schema-col"><span class="col-name">Discount</span><span>DECIMAL</span></div>
+        </div>
+      </div>
+      <div class="schema-table">
+        <div class="schema-table-name">Ticket</div>
+        <div class="schema-columns">
+          <div class="schema-col pk"><span class="col-name">Id</span><span>INT</span></div>
+          <div class="schema-col fk"><span class="col-name">CustomerId</span><span>FK</span></div>
+          <div class="schema-col fk"><span class="col-name">ScreeningId</span><span>FK</span></div>
+          <div class="schema-col fk"><span class="col-name">VoucherId</span><span>FK</span></div>
+          <div class="schema-col"><span class="col-name">Amount</span><span>INT</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAYGROUND -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Playground</h2>
+    </div>
+    <p>Write any SQL query and run it against the full database, which is loaded locally in your browser. Use <kbd>Cmd/Ctrl + Enter</kbd> to execute.</p>
+    <div class="playground">
+      <div class="editor-toolbar">
+        <span class="label">SQL Editor</span>
+        <button class="btn" onclick="clearEditor()" title="Clear editor">Clear</button>
+        <button class="btn" onclick="resetDatabase()" title="Reload original data">Reset DB</button>
+        <button class="btn btn-primary" onclick="runQuery()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Run
+        </button>
+      </div>
+      <textarea class="editor" id="editor" spellcheck="false" placeholder="-- Try a query, e.g.:
+SELECT Name, Duration FROM Movie ORDER BY Name;">SELECT Name, Duration FROM Movie ORDER BY Name;</textarea>
+      <div class="results">
+        <div class="results-status" id="status">
+          <span class="dot"></span>
+          <span id="status-text">Loading database…</span>
+        </div>
+        <div class="results-table-wrap" id="results">
+          <div class="results-empty">Run a query to see results.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUERIES -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">The 22 queries</h2>
+    </div>
+    <p>Every query from the original project, with a short description. Expand any one to view the SQL, then click Run in playground to send it to the editor and execute it.</p>
+    <div class="query-list">
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(1)" aria-expanded="false" aria-controls="query-body-1">
+          <div class="query-meta">
+            <span class="query-num">Q01</span>
+            <div>
+              <div class="query-title">Movies and durations</div>
+              <div class="query-desc">List all movies and their durations alphabetically.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-1">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    Name,
+    Duration
+FROM
+    Movie
+ORDER BY
+    Name;">SELECT
+    Name,
+    Duration
+FROM
+    Movie
+ORDER BY
+    Name;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(1)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(2)" aria-expanded="false" aria-controls="query-body-2">
+          <div class="query-meta">
+            <span class="query-num">Q02</span>
+            <div>
+              <div class="query-title">Average movie duration</div>
+              <div class="query-desc">Average movie duration in hours, rounded to two decimals.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-2">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    ROUND(AVG(Duration) / 60, 2) AS Duration
+FROM
+    Movie;">SELECT
+    ROUND(AVG(Duration) / 60, 2) AS Duration
+FROM
+    Movie;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(2)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(3)" aria-expanded="false" aria-controls="query-body-3">
+          <div class="query-meta">
+            <span class="query-num">Q03</span>
+            <div>
+              <div class="query-title">Customers per city</div>
+              <div class="query-desc">Number of customers in each city, ordered alphabetically.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-3">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    City,
+    COUNT(City) AS Customers
+FROM
+    Customer
+GROUP BY
+    City
+ORDER BY
+    City;">SELECT
+    City,
+    COUNT(City) AS Customers
+FROM
+    Customer
+GROUP BY
+    City
+ORDER BY
+    City;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(3)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(4)" aria-expanded="false" aria-controls="query-body-4">
+          <div class="query-meta">
+            <span class="query-num">Q04</span>
+            <div>
+              <div class="query-title">Screenings in 2020 and 2021</div>
+              <div class="query-desc">Total number of screenings held during 2020 and 2021.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-4">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    COUNT(Id) AS Movies
+FROM
+    Screening
+WHERE
+    YEAR(Date) BETWEEN 2020 AND 2021;">SELECT
+    COUNT(Id) AS Movies
+FROM
+    Screening
+WHERE
+    YEAR(Date) BETWEEN 2020 AND 2021;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(4)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(5)" aria-expanded="false" aria-controls="query-body-5">
+          <div class="query-meta">
+            <span class="query-num">Q05</span>
+            <div>
+              <div class="query-title">Tickets bought by a customer</div>
+              <div class="query-desc">Total tickets bought by Jonas Hicks across all screenings.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-5">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    SUM(Amount) AS Tickets
+FROM
+    Customer
+    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId
+WHERE
+    Name = &#x27;Jonas Hicks&#x27;;">SELECT
+    SUM(Amount) AS Tickets
+FROM
+    Customer
+    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId
+WHERE
+    Name = &#x27;Jonas Hicks&#x27;;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(5)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(6)" aria-expanded="false" aria-controls="query-body-6">
+          <div class="query-meta">
+            <span class="query-num">Q06</span>
+            <div>
+              <div class="query-title">Tickets per city</div>
+              <div class="query-desc">Total tickets sold grouped by customer city, highest first.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-6">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    City,
+    SUM(Amount) AS Tickets
+FROM
+    Customer
+    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId
+GROUP BY
+    City
+ORDER BY
+    Tickets DESC;">SELECT
+    City,
+    SUM(Amount) AS Tickets
+FROM
+    Customer
+    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId
+GROUP BY
+    City
+ORDER BY
+    Tickets DESC;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(6)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(7)" aria-expanded="false" aria-controls="query-body-7">
+          <div class="query-meta">
+            <span class="query-num">Q07</span>
+            <div>
+              <div class="query-title">Tickets per movie</div>
+              <div class="query-desc">Total tickets sold per movie, ranked by popularity.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-7">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    Name,
+    SUM(Amount) AS Tickets
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+GROUP BY
+    Name
+ORDER BY
+    Tickets DESC;">SELECT
+    Name,
+    SUM(Amount) AS Tickets
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+GROUP BY
+    Name
+ORDER BY
+    Tickets DESC;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(7)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(8)" aria-expanded="false" aria-controls="query-body-8">
+          <div class="query-meta">
+            <span class="query-num">Q08</span>
+            <div>
+              <div class="query-title">Licorice Pizza tickets by city</div>
+              <div class="query-desc">Tickets sold for Licorice Pizza grouped by customer city.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-8">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    City,
+    SUM(Amount) AS Tickets
+FROM
+    Customer
+    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+WHERE
+    Movie.Name = &#x27;Licorice Pizza&#x27;
+GROUP BY
+    City
+ORDER BY
+    Tickets;">SELECT
+    City,
+    SUM(Amount) AS Tickets
+FROM
+    Customer
+    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+WHERE
+    Movie.Name = &#x27;Licorice Pizza&#x27;
+GROUP BY
+    City
+ORDER BY
+    Tickets;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(8)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(9)" aria-expanded="false" aria-controls="query-body-9">
+          <div class="query-meta">
+            <span class="query-num">Q09</span>
+            <div>
+              <div class="query-title">Screenings per projection system</div>
+              <div class="query-desc">Number of screenings on each projection system, IMAX and Dolby Cinema.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-9">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    `System`,
+    COUNT(`System`) AS Screenings
+FROM
+    Room
+    INNER JOIN Screening ON Room.Id = Screening.RoomId
+GROUP BY
+    `System`
+ORDER BY
+    `System`;">SELECT
+    `System`,
+    COUNT(`System`) AS Screenings
+FROM
+    Room
+    INNER JOIN Screening ON Room.Id = Screening.RoomId
+GROUP BY
+    `System`
+ORDER BY
+    `System`;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(9)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(10)" aria-expanded="false" aria-controls="query-body-10">
+          <div class="query-meta">
+            <span class="query-num">Q10</span>
+            <div>
+              <div class="query-title">Windows screenings per system</div>
+              <div class="query-desc">Count of Windows screenings broken down by projection system.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-10">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    `System`,
+    COUNT(`System`) as Screenings
+FROM
+    Room
+    INNER JOIN Screening ON Room.Id = Screening.RoomId
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+WHERE
+    Name = &#x27;Windows&#x27;
+GROUP BY
+    `System`
+ORDER BY
+    Screenings;">SELECT
+    `System`,
+    COUNT(`System`) as Screenings
+FROM
+    Room
+    INNER JOIN Screening ON Room.Id = Screening.RoomId
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+WHERE
+    Name = &#x27;Windows&#x27;
+GROUP BY
+    `System`
+ORDER BY
+    Screenings;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(10)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(11)" aria-expanded="false" aria-controls="query-body-11">
+          <div class="query-meta">
+            <span class="query-num">Q11</span>
+            <div>
+              <div class="query-title">First screening of Replicas</div>
+              <div class="query-desc">Year, month and day of the earliest screening of Replicas.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-11">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    YEAR(MIN(Date)) AS Year,
+    MONTH(MIN(Date)) AS Month,
+    DAY(MIN(Date)) AS Day
+FROM
+    Screening
+    INNER JOIN Movie on Screening.MovieId = Movie.Id
+WHERE
+    Name = &#x27;Replicas&#x27;;">SELECT
+    YEAR(MIN(Date)) AS Year,
+    MONTH(MIN(Date)) AS Month,
+    DAY(MIN(Date)) AS Day
+FROM
+    Screening
+    INNER JOIN Movie on Screening.MovieId = Movie.Id
+WHERE
+    Name = &#x27;Replicas&#x27;;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(11)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(12)" aria-expanded="false" aria-controls="query-body-12">
+          <div class="query-meta">
+            <span class="query-num">Q12</span>
+            <div>
+              <div class="query-title">Tickets sold per year</div>
+              <div class="query-desc">Total tickets sold each year, chronologically.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-12">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    YEAR(Date),
+    SUM(Amount) AS Tickets
+FROM
+    Screening
+    INNER JOIN Ticket ON Screening.Id = Ticket.ScreeningId
+GROUP BY
+    YEAR(Date)
+ORDER BY
+    YEAR(Date);">SELECT
+    YEAR(Date),
+    SUM(Amount) AS Tickets
+FROM
+    Screening
+    INNER JOIN Ticket ON Screening.Id = Ticket.ScreeningId
+GROUP BY
+    YEAR(Date)
+ORDER BY
+    YEAR(Date);</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(12)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(13)" aria-expanded="false" aria-controls="query-body-13">
+          <div class="query-meta">
+            <span class="query-num">Q13</span>
+            <div>
+              <div class="query-title">Tickets for Keanu Reeves movies</div>
+              <div class="query-desc">Total tickets sold for any movie starring Keanu Reeves.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-13">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    SUM(Amount) AS Tickets
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+    INNER JOIN Cast ON Movie.Id = Cast.MovieId
+    INNER JOIN Actor ON Cast.ActorId = Actor.Id
+WHERE
+    Actor.Name = &#x27;Keanu Reeves&#x27;;">SELECT
+    SUM(Amount) AS Tickets
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+    INNER JOIN Cast ON Movie.Id = Cast.MovieId
+    INNER JOIN Actor ON Cast.ActorId = Actor.Id
+WHERE
+    Actor.Name = &#x27;Keanu Reeves&#x27;;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(13)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(14)" aria-expanded="false" aria-controls="query-body-14">
+          <div class="query-meta">
+            <span class="query-num">Q14</span>
+            <div>
+              <div class="query-title">Distinct movies per room</div>
+              <div class="query-desc">Number of unique movies screened in each room.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-14">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    RoomId AS Room,
+    COUNT(DISTINCT(MovieId)) AS Movies
+FROM
+    Screening
+    INNER JOIN Room ON Screening.RoomId = Room.Id
+GROUP BY
+    RoomId
+ORDER BY
+    RoomId;">SELECT
+    RoomId AS Room,
+    COUNT(DISTINCT(MovieId)) AS Movies
+FROM
+    Screening
+    INNER JOIN Room ON Screening.RoomId = Room.Id
+GROUP BY
+    RoomId
+ORDER BY
+    RoomId;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(14)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(15)" aria-expanded="false" aria-controls="query-body-15">
+          <div class="query-meta">
+            <span class="query-num">Q15</span>
+            <div>
+              <div class="query-title">Tickets per Sean Penn movie</div>
+              <div class="query-desc">Tickets sold for each movie starring Sean Penn, using a subquery to filter by actor.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-15">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    Movie.Name,
+    SUM(Amount) AS Tickets
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+WHERE Movie.Id IN (
+    SELECT
+        Movie.Id
+    FROM
+        Movie
+        INNER JOIN Cast ON Movie.Id = Cast.MovieId
+        INNER JOIN Actor on Cast.ActorId = Actor.Id
+    WHERE
+        Actor.Name = &#x27;Sean Penn&#x27;)
+GROUP BY
+    Movie.Name
+ORDER BY
+    Movie.Name;">SELECT
+    Movie.Name,
+    SUM(Amount) AS Tickets
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+WHERE Movie.Id IN (
+    SELECT
+        Movie.Id
+    FROM
+        Movie
+        INNER JOIN Cast ON Movie.Id = Cast.MovieId
+        INNER JOIN Actor on Cast.ActorId = Actor.Id
+    WHERE
+        Actor.Name = &#x27;Sean Penn&#x27;)
+GROUP BY
+    Movie.Name
+ORDER BY
+    Movie.Name;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(15)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(16)" aria-expanded="false" aria-controls="query-body-16">
+          <div class="query-meta">
+            <span class="query-num">Q16</span>
+            <div>
+              <div class="query-title">Release to first screening lag</div>
+              <div class="query-desc">Days between movie release and first screening for each movie.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-16">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    Name,
+    DATEDIFF(MIN(Date), `Release`) AS Difference
+FROM
+    Movie
+    INNER JOIN Screening ON Movie.Id = Screening.MovieId
+GROUP BY
+    Movie.Id
+ORDER BY
+    Name;">SELECT
+    Name,
+    DATEDIFF(MIN(Date), `Release`) AS Difference
+FROM
+    Movie
+    INNER JOIN Screening ON Movie.Id = Screening.MovieId
+GROUP BY
+    Movie.Id
+ORDER BY
+    Name;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(16)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(17)" aria-expanded="false" aria-controls="query-body-17">
+          <div class="query-meta">
+            <span class="query-num">Q17</span>
+            <div>
+              <div class="query-title">Total screen-time per movie</div>
+              <div class="query-desc">Total hours each movie has spent on screen, from screenings times duration.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-17">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    Name,
+    ROUND(COUNT(Screening.Id) * Duration / 60.0, 2) AS Hours
+FROM
+    Screening
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+GROUP BY
+    MovieId
+ORDER BY
+    Hours;">SELECT
+    Name,
+    ROUND(COUNT(Screening.Id) * Duration / 60.0, 2) AS Hours
+FROM
+    Screening
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+GROUP BY
+    MovieId
+ORDER BY
+    Hours;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(17)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(18)" aria-expanded="false" aria-controls="query-body-18">
+          <div class="query-meta">
+            <span class="query-num">Q18</span>
+            <div>
+              <div class="query-title">Screen-time split by system</div>
+              <div class="query-desc">Hours each movie ran in Dolby Cinema versus IMAX, using conditional aggregation.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-18">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    Name,
+    ROUND(COUNT(IF(`System` = &#x27;Dolby Cinema&#x27;, Screening.Id, NULL)) * Duration / 60.0, 2) AS `Dolby Cinema`,
+    ROUND(COUNT(IF(`System` = &#x27;IMAX&#x27;, Screening.Id, NULL)) * Duration / 60.0, 2) AS `IMAX`
+FROM
+    Screening
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+    INNER JOIN Room ON Screening.RoomId = Room.Id
+GROUP BY
+    MovieId
+ORDER BY
+    Name;">SELECT
+    Name,
+    ROUND(COUNT(IF(`System` = &#x27;Dolby Cinema&#x27;, Screening.Id, NULL)) * Duration / 60.0, 2) AS `Dolby Cinema`,
+    ROUND(COUNT(IF(`System` = &#x27;IMAX&#x27;, Screening.Id, NULL)) * Duration / 60.0, 2) AS `IMAX`
+FROM
+    Screening
+    INNER JOIN Movie ON Screening.MovieId = Movie.Id
+    INNER JOIN Room ON Screening.RoomId = Room.Id
+GROUP BY
+    MovieId
+ORDER BY
+    Name;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(18)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(19)" aria-expanded="false" aria-controls="query-body-19">
+          <div class="query-meta">
+            <span class="query-num">Q19</span>
+            <div>
+              <div class="query-title">Voucher redemption rate</div>
+              <div class="query-desc">Fraction of vouchers that have been redeemed, using a RIGHT JOIN to keep unused ones.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-19">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    ROUND(COUNT(Ticket.VoucherId) * 1.0 / COUNT(Voucher.Id), 2) AS Redeemed
+FROM
+    Ticket
+    RIGHT JOIN Voucher ON Ticket.VoucherId = Voucher.Id;">SELECT
+    ROUND(COUNT(Ticket.VoucherId) * 1.0 / COUNT(Voucher.Id), 2) AS Redeemed
+FROM
+    Ticket
+    RIGHT JOIN Voucher ON Ticket.VoucherId = Voucher.Id;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(19)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(20)" aria-expanded="false" aria-controls="query-body-20">
+          <div class="query-meta">
+            <span class="query-num">Q20</span>
+            <div>
+              <div class="query-title">Voucher discount per year</div>
+              <div class="query-desc">Total discount value applied through vouchers, by year.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-20">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    YEAR(Screening.Date) AS Year,
+    ROUND(SUM(Ticket.Amount * Screening.Price * Voucher.Discount), 2) AS Discount
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Voucher ON Ticket.VoucherId = Voucher.Id
+GROUP BY
+    YEAR(Screening.Date);">SELECT
+    YEAR(Screening.Date) AS Year,
+    ROUND(SUM(Ticket.Amount * Screening.Price * Voucher.Discount), 2) AS Discount
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    INNER JOIN Voucher ON Ticket.VoucherId = Voucher.Id
+GROUP BY
+    YEAR(Screening.Date);</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(20)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(21)" aria-expanded="false" aria-controls="query-body-21">
+          <div class="query-meta">
+            <span class="query-num">Q21</span>
+            <div>
+              <div class="query-title">Net revenue per year</div>
+              <div class="query-desc">Yearly revenue after voucher discounts, with a LEFT JOIN to handle tickets that have no voucher.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-21">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    YEAR(Date) AS Year,
+    ROUND(SUM(Amount * Price * (1 - IF(Discount IS NULL, 0, Discount))), 2) AS Revenue
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    LEFT JOIN Voucher ON Ticket.VoucherId = Voucher.Id
+GROUP BY
+    YEAR(Date)
+ORDER BY
+    YEAR(Date);">SELECT
+    YEAR(Date) AS Year,
+    ROUND(SUM(Amount * Price * (1 - IF(Discount IS NULL, 0, Discount))), 2) AS Revenue
+FROM
+    Ticket
+    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    LEFT JOIN Voucher ON Ticket.VoucherId = Voucher.Id
+GROUP BY
+    YEAR(Date)
+ORDER BY
+    YEAR(Date);</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(21)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="query-item">
+        <button class="query-header" onclick="toggleQuery(22)" aria-expanded="false" aria-controls="query-body-22">
+          <div class="query-meta">
+            <span class="query-num">Q22</span>
+            <div>
+              <div class="query-title">Regular customers per year</div>
+              <div class="query-desc">Customers who bought at least four tickets in a year, computed through a derived table.</div>
+            </div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="query-body" id="query-body-22">
+          <pre class="code-block"><code class="sql" data-sql="SELECT
+    Year,
+    SUM(Regular) AS Count
+FROM
+    (SELECT
+        YEAR(Date) AS Year,
+        SUM(Amount) &gt;= 4 AS Regular
+    FROM
+        Ticket
+        INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    GROUP BY
+        YEAR(Date),
+        CustomerId) AS Temp
+GROUP BY
+    Year
+ORDER BY
+    Year;">SELECT
+    Year,
+    SUM(Regular) AS Count
+FROM
+    (SELECT
+        YEAR(Date) AS Year,
+        SUM(Amount) &gt;= 4 AS Regular
+    FROM
+        Ticket
+        INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id
+    GROUP BY
+        YEAR(Date),
+        CustomerId) AS Temp
+GROUP BY
+    Year
+ORDER BY
+    Year;</code></pre>
+          <div class="query-actions">
+            <button class="btn-primary" onclick="loadQueryIntoEditor(22)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 3l14 9-14 9V3z"/></svg>
+              Run in playground
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div>Mariano Cánovas © 2026 · Built in Rotterdam</div>
+  <div><a href="mailto:marianockiwi@gmail.com">marianockiwi@gmail.com</a></div>
+</footer>
+
+<!-- Embedded SQLite database schema + data -->
+<script type="text/sql" id="cinema-schema">
+CREATE TABLE `Customer` (
+  `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `Name` TEXT NOT NULL,
+  `City` TEXT NOT NULL
+);
+
+CREATE TABLE `Actor` (
+  `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `Name` TEXT NOT NULL
+);
+
+CREATE TABLE `Movie` (
+  `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `Name` TEXT NOT NULL,
+  `Release` TEXT NOT NULL,
+  `Duration` INTEGER NOT NULL
+);
+
+CREATE TABLE `Cast` (
+  `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `MovieId` INTEGER NOT NULL,
+  `ActorId` INTEGER NOT NULL,
+  FOREIGN KEY (`MovieId`) REFERENCES `Movie`(`Id`),
+  FOREIGN KEY (`ActorId`) REFERENCES `Actor`(`Id`)
+);
+
+CREATE TABLE `Room` (
+  `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `System` TEXT NOT NULL
+);
+
+CREATE TABLE `Screening` (
+  `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `MovieId` INTEGER NOT NULL,
+  `RoomId` INTEGER NOT NULL,
+  `Date` TEXT NOT NULL,
+  `Price` REAL NOT NULL,
+  FOREIGN KEY (`MovieId`) REFERENCES `Movie`(`Id`),
+  FOREIGN KEY (`RoomId`) REFERENCES `Room`(`Id`)
+);
+
+CREATE TABLE `Voucher` (
+  `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `Discount` REAL NOT NULL
+);
+
+CREATE TABLE `Ticket` (
+  `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `CustomerId` INTEGER NOT NULL,
+  `ScreeningId` INTEGER NOT NULL,
+  `VoucherId` INTEGER UNIQUE,
+  `Amount` INTEGER NOT NULL,
+  FOREIGN KEY (`CustomerId`) REFERENCES `Customer`(`Id`),
+  FOREIGN KEY (`ScreeningId`) REFERENCES `Screening`(`Id`),
+  FOREIGN KEY (`VoucherId`) REFERENCES `Voucher`(`Id`)
+);
+
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Abbey Johnson', 'New Rochelle');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Josh Moody', 'New Rochelle');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Brenton Welch', 'New Rochelle');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Jake Horton', 'New Rochelle');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Matthew Pena', 'Yonkers');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Franco Atkins', 'Yonkers');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Jonas Hicks', 'Elizabeth');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Derek Brewer', 'Elizabeth');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Bobby Giles', 'Elizabeth');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Colin Blackwell', 'Elizabeth');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Cindy Simpson', 'Ridgewood');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Frankie Harvey', 'Ridgewood');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Connie Chen', 'Ridgewood');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Gina Gregory', 'Ramsey');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Lewis Vincent', 'Ramsey');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Cody Miranda', 'Oakland');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Reginald Chaney', 'Clifton');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Jan Schneider', 'Clifton');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Kurt David', 'Clifton');
+INSERT INTO `Customer` (`Name`, `City`) VALUES ('Janis Church', 'Woodbridge');
+
+INSERT INTO `Actor` (`Name`) VALUES ('Viola Davis');
+INSERT INTO `Actor` (`Name`) VALUES ('Michelle Rodriguez');
+INSERT INTO `Actor` (`Name`) VALUES ('Elizabeth Debicki');
+INSERT INTO `Actor` (`Name`) VALUES ('Liam Neeson');
+INSERT INTO `Actor` (`Name`) VALUES ('Keanu Reeves');
+INSERT INTO `Actor` (`Name`) VALUES ('Alice Eve');
+INSERT INTO `Actor` (`Name`) VALUES ('Thomas Middleditch');
+INSERT INTO `Actor` (`Name`) VALUES ('John Ortiz');
+INSERT INTO `Actor` (`Name`) VALUES ('Halle Berry');
+INSERT INTO `Actor` (`Name`) VALUES ('Ian McShane');
+INSERT INTO `Actor` (`Name`) VALUES ('Laurence Fishburne');
+INSERT INTO `Actor` (`Name`) VALUES ('John David Washington');
+INSERT INTO `Actor` (`Name`) VALUES ('Robert Pattinson');
+INSERT INTO `Actor` (`Name`) VALUES ('Juhan Ulfsak');
+INSERT INTO `Actor` (`Name`) VALUES ('Mel Gibson');
+INSERT INTO `Actor` (`Name`) VALUES ('Sean Penn');
+INSERT INTO `Actor` (`Name`) VALUES ('Eddie Marsan');
+INSERT INTO `Actor` (`Name`) VALUES ('Natalie Dormer');
+INSERT INTO `Actor` (`Name`) VALUES ('Alana Haim');
+INSERT INTO `Actor` (`Name`) VALUES ('Cooper Hoffman');
+INSERT INTO `Actor` (`Name`) VALUES ('Tom Waits');
+
+INSERT INTO `Movie` (`Name`, `Release`, `Duration`) VALUES ('Windows', '2018-11-16', 129);
+INSERT INTO `Movie` (`Name`, `Release`, `Duration`) VALUES ('Replicas', '2019-01-11', 107);
+INSERT INTO `Movie` (`Name`, `Release`, `Duration`) VALUES ('John Wick 3', '2019-05-17', 130);
+INSERT INTO `Movie` (`Name`, `Release`, `Duration`) VALUES ('Tenet', '2020-09-03', 150);
+INSERT INTO `Movie` (`Name`, `Release`, `Duration`) VALUES ('The Professor and the Madman', '2019-05-10', 124);
+INSERT INTO `Movie` (`Name`, `Release`, `Duration`) VALUES ('Licorice Pizza', '2021-12-25', 133);
+
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(1, 1);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(1, 2);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(1, 3);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(1, 4);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(2, 5);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(2, 6);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(2, 7);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(2, 8);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(3, 5);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(3, 9);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(3, 10);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(3, 11);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(4, 12);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(4, 13);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(4, 3);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(4, 14);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(5, 15);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(5, 16);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(5, 17);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(5, 18);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(6, 19);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(6, 20);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(6, 16);
+INSERT INTO `Cast` (`MovieId`, `ActorId`) VALUES(6, 21);
+
+INSERT INTO `Room` (`System`) VALUES ('Dolby Cinema');
+INSERT INTO `Room` (`System`) VALUES ('Dolby Cinema');
+INSERT INTO `Room` (`System`) VALUES ('IMAX');
+
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 2, '2018-11-17 14:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 1, '2018-11-17 10:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 1, '2018-11-17 18:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 2, '2018-11-17 22:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 3, '2018-11-18 10:00:00', 9.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 2, '2018-11-18 14:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 1, '2018-11-18 18:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 1, '2018-11-18 22:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 2, '2018-11-19 10:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 2, '2018-11-19 14:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 3, '2018-11-19 18:00:00', 9.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 1, '2018-11-19 22:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 1, '2018-11-20 10:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 2, '2018-11-20 14:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 2, '2018-11-20 18:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (1, 1, '2018-11-20 22:00:00', 11.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 3, '2019-01-13 11:15:00', 10.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 1, '2019-01-13 15:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 1, '2019-01-13 19:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 2, '2019-01-14 11:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 3, '2019-01-14 15:15:00', 10.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 3, '2019-01-14 19:15:00', 10.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 2, '2019-01-15 11:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 1, '2019-01-15 15:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 1, '2019-01-15 19:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 2, '2019-01-16 11:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 2, '2019-01-16 15:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (2, 1, '2019-01-16 19:15:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (5, 1, '2019-05-11 10:30:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (5, 1, '2019-05-11 14:30:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (5, 2, '2019-05-11 18:30:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (5, 1, '2019-05-12 10:30:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (5, 2, '2019-05-12 14:30:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (5, 1, '2019-05-12 18:30:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 3, '2019-05-20 09:00:00', 10.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 2, '2019-05-20 13:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 3, '2019-05-20 17:00:00', 10.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 3, '2019-05-20 21:00:00', 10.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 1, '2019-05-21 09:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 2, '2019-05-21 13:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 2, '2019-05-21 17:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 1, '2019-05-21 21:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 1, '2019-05-22 09:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 1, '2019-05-22 13:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 2, '2019-05-22 17:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 2, '2019-05-22 21:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 3, '2019-05-23 09:00:00', 10.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 1, '2019-05-23 13:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 2, '2019-05-23 17:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (3, 1, '2019-05-23 21:00:00', 12.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (4, 1, '2020-09-03 09:30:00', 12.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (4, 2, '2020-09-03 13:30:00', 12.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (4, 3, '2020-09-03 17:30:00', 10.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (4, 1, '2020-09-03 21:30:00', 12.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (4, 1, '2020-09-04 09:30:00', 12.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (4, 2, '2020-09-04 13:30:00', 12.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (4, 3, '2020-09-04 17:30:00', 10.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (4, 2, '2020-09-04 21:30:00', 12.99);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 3, '2021-12-29 08:45:00', 11.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 2, '2021-12-29 12:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 1, '2021-12-29 16:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 2, '2021-12-29 20:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 1, '2021-12-30 08:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 2, '2021-12-30 12:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 3, '2021-12-30 16:45:00', 11.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 3, '2021-12-30 20:45:00', 11.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 1, '2021-12-30 08:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 1, '2021-12-30 12:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 2, '2021-12-30 16:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 3, '2021-12-30 20:45:00', 11.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 1, '2021-12-30 08:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 2, '2021-12-30 12:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 3, '2021-12-30 16:45:00', 11.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 2, '2021-12-30 20:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 1, '2021-12-31 08:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 2, '2021-12-31 12:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 1, '2021-12-31 16:45:00', 13.49);
+INSERT INTO `Screening` (`MovieId`, `RoomId`, `Date`, `Price`) VALUES (6, 1, '2021-12-31 20:45:00', 13.49);
+
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.10);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+INSERT INTO `Voucher` (`Discount`) VALUES (0.05);
+
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (1, 1, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (2, 1, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (3, 2, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (4, 2, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (5, 3, 1, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (6, 3, NULL, 6);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (7, 3, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (8, 4, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (9, 5, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (10, 6, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (11, 6, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (12, 7, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (13, 8, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (14, 9, 3, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (15, 9, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (16, 9, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (17, 9, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (18, 10, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (19, 11, 2, 5);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (20, 12, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (1, 13, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (2, 14, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (3, 15, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (4, 15, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (5, 16, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (6, 16, NULL, 5);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (7, 16, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (8, 17, 6, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (9, 18, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (10, 19, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (11, 20, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (12, 21, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (13, 22, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (14, 23, 4, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (15, 23, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (16, 24, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (17, 25, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (18, 26, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (19, 26, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (20, 26, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (1, 27, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (2, 28, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (3, 29, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (4, 29, 9, 6);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (5, 30, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (6, 30, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (7, 30, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (8, 31, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (9, 32, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (10, 33, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (11, 34, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (12, 34, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (13, 34, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (14, 34, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (15, 34, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (16, 35, 7, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (17, 36, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (18, 37, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (19, 38, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (20, 39, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (1, 39, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (2, 40, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (3, 41, NULL, 5);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (4, 42, NULL, 6);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (5, 43, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (6, 43, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (7, 44, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (8, 44, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (9, 45, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (10, 45, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (11, 46, NULL, 5);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (12, 47, NULL, 6);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (13, 48, 12, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (14, 48, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (15, 48, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (16, 49, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (17, 50, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (18, 51, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (19, 52, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (20, 53, NULL, 5);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (1, 54, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (2, 55, 15, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (3, 56, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (4, 57, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (5, 58, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (6, 59, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (7, 59, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (8, 59, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (9, 60, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (10, 61, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (11, 61, 18, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (12, 62, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (13, 62, NULL, 5);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (14, 62, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (15, 63, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (16, 64, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (17, 65, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (18, 66, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (19, 67, 14, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (20, 68, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (1, 68, NULL, 6);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (2, 69, NULL, 6);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (3, 70, NULL, 5);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (4, 70, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (5, 71, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (6, 72, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (7, 73, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (8, 73, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (9, 74, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (10, 75, 17, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (11, 75, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (12, 76, NULL, 4);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (13, 76, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (14, 76, NULL, 7);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (15, 77, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (16, 77, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (17, 78, NULL, 3);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (18, 78, NULL, 1);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (19, 78, NULL, 2);
+INSERT INTO `Ticket` (`CustomerId`, `ScreeningId`, `VoucherId`, `Amount`) VALUES (20, 78, NULL, 2);
+
+</script>
+
+<!-- sql.js (SQLite compiled to WebAssembly) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+
+<script>
+// ---- Theme toggle ----
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display  = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try {
+    if (localStorage.getItem('mariano-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+
+// ---- Query data (Mari's original MySQL versions) ----
+const QUERIES = {"1": "SELECT\n    Name,\n    Duration\nFROM\n    Movie\nORDER BY\n    Name;", "2": "SELECT\n    ROUND(AVG(Duration) / 60, 2) AS Duration\nFROM\n    Movie;", "3": "SELECT\n    City,\n    COUNT(City) AS Customers\nFROM\n    Customer\nGROUP BY\n    City\nORDER BY\n    City;", "4": "SELECT\n    COUNT(Id) AS Movies\nFROM\n    Screening\nWHERE\n    YEAR(Date) BETWEEN 2020 AND 2021;", "5": "SELECT\n    SUM(Amount) AS Tickets\nFROM\n    Customer\n    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId\nWHERE\n    Name = 'Jonas Hicks';", "6": "SELECT\n    City,\n    SUM(Amount) AS Tickets\nFROM\n    Customer\n    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId\nGROUP BY\n    City\nORDER BY\n    Tickets DESC;", "7": "SELECT\n    Name,\n    SUM(Amount) AS Tickets\nFROM\n    Ticket\n    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id\n    INNER JOIN Movie ON Screening.MovieId = Movie.Id\nGROUP BY\n    Name\nORDER BY\n    Tickets DESC;", "8": "SELECT\n    City,\n    SUM(Amount) AS Tickets\nFROM\n    Customer\n    INNER JOIN Ticket ON Customer.Id = Ticket.CustomerId\n    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id\n    INNER JOIN Movie ON Screening.MovieId = Movie.Id\nWHERE\n    Movie.Name = 'Licorice Pizza'\nGROUP BY\n    City\nORDER BY\n    Tickets;", "9": "SELECT\n    `System`,\n    COUNT(`System`) AS Screenings\nFROM\n    Room\n    INNER JOIN Screening ON Room.Id = Screening.RoomId\nGROUP BY\n    `System`\nORDER BY\n    `System`;", "10": "SELECT\n    `System`,\n    COUNT(`System`) as Screenings\nFROM\n    Room\n    INNER JOIN Screening ON Room.Id = Screening.RoomId\n    INNER JOIN Movie ON Screening.MovieId = Movie.Id\nWHERE\n    Name = 'Windows'\nGROUP BY\n    `System`\nORDER BY\n    Screenings;", "11": "SELECT\n    YEAR(MIN(Date)) AS Year,\n    MONTH(MIN(Date)) AS Month,\n    DAY(MIN(Date)) AS Day\nFROM\n    Screening\n    INNER JOIN Movie on Screening.MovieId = Movie.Id\nWHERE\n    Name = 'Replicas';", "12": "SELECT\n    YEAR(Date),\n    SUM(Amount) AS Tickets\nFROM\n    Screening\n    INNER JOIN Ticket ON Screening.Id = Ticket.ScreeningId\nGROUP BY\n    YEAR(Date)\nORDER BY\n    YEAR(Date);", "13": "SELECT\n    SUM(Amount) AS Tickets\nFROM\n    Ticket\n    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id\n    INNER JOIN Movie ON Screening.MovieId = Movie.Id\n    INNER JOIN Cast ON Movie.Id = Cast.MovieId\n    INNER JOIN Actor ON Cast.ActorId = Actor.Id\nWHERE\n    Actor.Name = 'Keanu Reeves';", "14": "SELECT\n    RoomId AS Room,\n    COUNT(DISTINCT(MovieId)) AS Movies\nFROM\n    Screening\n    INNER JOIN Room ON Screening.RoomId = Room.Id\nGROUP BY\n    RoomId\nORDER BY\n    RoomId;", "15": "SELECT\n    Movie.Name,\n    SUM(Amount) AS Tickets\nFROM\n    Ticket\n    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id\n    INNER JOIN Movie ON Screening.MovieId = Movie.Id\nWHERE Movie.Id IN (\n    SELECT\n        Movie.Id\n    FROM\n        Movie\n        INNER JOIN Cast ON Movie.Id = Cast.MovieId\n        INNER JOIN Actor on Cast.ActorId = Actor.Id\n    WHERE\n        Actor.Name = 'Sean Penn')\nGROUP BY\n    Movie.Name\nORDER BY\n    Movie.Name;", "16": "SELECT\n    Name,\n    DATEDIFF(MIN(Date), `Release`) AS Difference\nFROM\n    Movie\n    INNER JOIN Screening ON Movie.Id = Screening.MovieId\nGROUP BY\n    Movie.Id\nORDER BY\n    Name;", "17": "SELECT\n    Name,\n    ROUND(COUNT(Screening.Id) * Duration / 60.0, 2) AS Hours\nFROM\n    Screening\n    INNER JOIN Movie ON Screening.MovieId = Movie.Id\nGROUP BY\n    MovieId\nORDER BY\n    Hours;", "18": "SELECT\n    Name,\n    ROUND(COUNT(IF(`System` = 'Dolby Cinema', Screening.Id, NULL)) * Duration / 60.0, 2) AS `Dolby Cinema`,\n    ROUND(COUNT(IF(`System` = 'IMAX', Screening.Id, NULL)) * Duration / 60.0, 2) AS `IMAX`\nFROM\n    Screening\n    INNER JOIN Movie ON Screening.MovieId = Movie.Id\n    INNER JOIN Room ON Screening.RoomId = Room.Id\nGROUP BY\n    MovieId\nORDER BY\n    Name;", "19": "SELECT\n    ROUND(COUNT(Ticket.VoucherId) * 1.0 / COUNT(Voucher.Id), 2) AS Redeemed\nFROM\n    Ticket\n    RIGHT JOIN Voucher ON Ticket.VoucherId = Voucher.Id;", "20": "SELECT\n    YEAR(Screening.Date) AS Year,\n    ROUND(SUM(Ticket.Amount * Screening.Price * Voucher.Discount), 2) AS Discount\nFROM\n    Ticket\n    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id\n    INNER JOIN Voucher ON Ticket.VoucherId = Voucher.Id\nGROUP BY\n    YEAR(Screening.Date);", "21": "SELECT\n    YEAR(Date) AS Year,\n    ROUND(SUM(Amount * Price * (1 - IF(Discount IS NULL, 0, Discount))), 2) AS Revenue\nFROM\n    Ticket\n    INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id\n    LEFT JOIN Voucher ON Ticket.VoucherId = Voucher.Id\nGROUP BY\n    YEAR(Date)\nORDER BY\n    YEAR(Date);", "22": "SELECT\n    Year,\n    SUM(Regular) AS Count\nFROM\n    (SELECT\n        YEAR(Date) AS Year,\n        SUM(Amount) >= 4 AS Regular\n    FROM\n        Ticket\n        INNER JOIN Screening ON Ticket.ScreeningId = Screening.Id\n    GROUP BY\n        YEAR(Date),\n        CustomerId) AS Temp\nGROUP BY\n    Year\nORDER BY\n    Year;"};
+
+// ---- MySQL -> SQLite syntax adapter ----
+function mysqlToSqlite(sql) {
+  // YEAR(x), MONTH(x), DAY(x) -> strftime equivalents
+  // Handle one level of nested parens with the [^()]* and (?:\([^()]*\))? pattern
+  sql = sql.replace(/\bYEAR\s*\(((?:[^()]|\([^()]*\))+)\)/gi,
+    (_, inner) => `CAST(strftime('%Y', ${inner}) AS INTEGER)`);
+  sql = sql.replace(/\bMONTH\s*\(((?:[^()]|\([^()]*\))+)\)/gi,
+    (_, inner) => `CAST(strftime('%m', ${inner}) AS INTEGER)`);
+  sql = sql.replace(/\bDAY\s*\(((?:[^()]|\([^()]*\))+)\)/gi,
+    (_, inner) => `CAST(strftime('%d', ${inner}) AS INTEGER)`);
+  // DATEDIFF(a, b) -> CAST(julianday(a) - julianday(b) AS INTEGER)
+  sql = sql.replace(/\bDATEDIFF\s*\(((?:[^()]|\([^()]*\))+)\)/gi, (_, inner) => {
+    // Find top-level comma
+    let depth = 0;
+    for (let i = 0; i < inner.length; i++) {
+      const c = inner[i];
+      if (c === '(') depth++;
+      else if (c === ')') depth--;
+      else if (c === ',' && depth === 0) {
+        const a = inner.slice(0, i).trim();
+        const b = inner.slice(i + 1).trim();
+        return `CAST(julianday(${a}) - julianday(${b}) AS INTEGER)`;
+      }
+    }
+    return _;
+  });
+  // IF(...) -> iif(...) — but not inside other word like IFNULL
+  sql = sql.replace(/\bIF\s*\(/g, 'iif(');
+  // SQLite's parser confuses bare `Cast` (the table) with the CAST() function
+  // when it appears as `Cast.col` or in JOIN contexts. Wrap it in backticks.
+  // Match `Cast` only when NOT followed by `(` (which would mean the CAST function)
+  // and NOT already backtick-quoted.
+  sql = sql.replace(/(?<!`)\bCast\b(?!`)(?!\s*\()/g, '`Cast`');
+  return sql;
+}
+
+// ---- Database ----
+let db = null;
+let SQL = null;
+
+async function initDb() {
+  try {
+    SQL = await initSqlJs({
+      locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
+    });
+    resetDatabase();
+    setStatus('ok', 'Database ready · 235 rows loaded');
+  } catch (e) {
+    setStatus('err', 'Failed to load database: ' + e.message);
+  }
+}
+
+function resetDatabase() {
+  if (!SQL) return;
+  db = new SQL.Database();
+  const schema = document.getElementById('cinema-schema').textContent;
+  db.exec(schema);
+  setStatus('ok', 'Database reset · ready');
+}
+
+function setStatus(kind, text) {
+  const s = document.getElementById('status');
+  s.className = 'results-status ' + (kind || '');
+  document.getElementById('status-text').textContent = text;
+}
+
+function clearEditor() {
+  document.getElementById('editor').value = '';
+  document.getElementById('editor').focus();
+}
+
+// ---- Run query ----
+function runQuery() {
+  if (!db) {
+    setStatus('err', 'Database not ready yet');
+    return;
+  }
+  const raw = document.getElementById('editor').value.trim();
+  if (!raw) {
+    setStatus('', 'Editor is empty');
+    return;
+  }
+  const adapted = mysqlToSqlite(raw);
+  try {
+    const results = db.exec(adapted);
+    renderResults(results);
+  } catch (e) {
+    renderError(e.message);
+  }
+}
+
+function renderResults(results) {
+  const container = document.getElementById('results');
+  if (!results || results.length === 0) {
+    container.innerHTML = '<div class="results-empty">Query OK — no rows returned.</div>';
+    setStatus('ok', 'Executed · 0 rows');
+    return;
+  }
+  // Use the last result set (most queries return only one)
+  const r = results[results.length - 1];
+  const cols = r.columns;
+  const rows = r.values;
+  let html = '<table class="results-table"><thead><tr>';
+  cols.forEach(c => html += `<th>${escapeHtml(String(c))}</th>`);
+  html += '</tr></thead><tbody>';
+  const limit = Math.min(rows.length, 200);
+  for (let i = 0; i < limit; i++) {
+    html += '<tr>';
+    rows[i].forEach(v => {
+      const display = v === null ? '<em style="color:var(--dim)">NULL</em>' : escapeHtml(String(v));
+      html += `<td>${display}</td>`;
+    });
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  const more = rows.length > limit ? ` (showing first ${limit})` : '';
+  setStatus('ok', `Executed · ${rows.length} row${rows.length === 1 ? '' : 's'}${more}`);
+}
+
+function renderError(msg) {
+  const container = document.getElementById('results');
+  container.innerHTML = `<div class="results-empty" style="color: var(--error); text-align: left; padding: 16px; font-size: 12.5px; line-height: 1.5;">${escapeHtml(msg)}</div>`;
+  setStatus('err', 'Error');
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ---- Query showcase ----
+function toggleQuery(num) {
+  const item = document.getElementById('query-body-' + num).parentElement;
+  const isOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  item.querySelector('.query-header').setAttribute('aria-expanded', String(!isOpen));
+}
+
+function loadQueryIntoEditor(num) {
+  const sql = QUERIES[num];
+  if (!sql) return;
+  const editor = document.getElementById('editor');
+  editor.value = sql;
+  // Scroll to playground
+  document.querySelector('.playground').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Wait for scroll, then run
+  setTimeout(runQuery, 400);
+}
+
+// ---- Keyboard shortcuts ----
+document.getElementById('editor').addEventListener('keydown', (e) => {
+  // Cmd/Ctrl + Enter -> run
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runQuery();
+  }
+  // Tab -> insert tab
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.slice(0, start) + '    ' + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + 4;
+  }
+});
+
+// ---- Simple SQL syntax highlighter for code blocks ----
+const SQL_KEYWORDS = /\b(SELECT|FROM|WHERE|GROUP BY|ORDER BY|HAVING|JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|OUTER JOIN|ON|AS|AND|OR|NOT|IN|BETWEEN|LIKE|IS|NULL|DISTINCT|COUNT|SUM|AVG|MIN|MAX|ROUND|CASE|WHEN|THEN|ELSE|END|UNION|ALL|EXISTS|LIMIT|OFFSET|ASC|DESC|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|ALTER|DROP|PRIMARY|KEY|FOREIGN|REFERENCES|UNIQUE|DEFAULT|AUTOINCREMENT|AUTO_INCREMENT|UNSIGNED|INT|INTEGER|VARCHAR|TEXT|DECIMAL|REAL|DATETIME|DATE|BOOLEAN|ENUM|IF|YEAR|MONTH|DAY|DATEDIFF|CAST|STRFTIME)\b/gi;
+
+function highlightSql(code) {
+  // Tokenize comments first to avoid highlighting their contents
+  const placeholders = [];
+  // Strings (single-quoted)
+  code = code.replace(/'[^']*'/g, m => {
+    const i = placeholders.length;
+    placeholders.push(`<span class="str">${escapeHtml(m)}</span>`);
+    return `\x00${i}\x00`;
+  });
+  // Line comments
+  code = code.replace(/--[^\n]*/g, m => {
+    const i = placeholders.length;
+    placeholders.push(`<span class="cmt">${escapeHtml(m)}</span>`);
+    return `\x00${i}\x00`;
+  });
+  // Hash comments (MySQL)
+  code = code.replace(/#[^\n]*/g, m => {
+    const i = placeholders.length;
+    placeholders.push(`<span class="cmt">${escapeHtml(m)}</span>`);
+    return `\x00${i}\x00`;
+  });
+  // Escape what's left
+  code = escapeHtml(code);
+  // Numbers
+  code = code.replace(/\b\d+(\.\d+)?\b/g, m => `<span class="num">${m}</span>`);
+  // Keywords
+  code = code.replace(SQL_KEYWORDS, m => `<span class="kw">${m.toUpperCase()}</span>`);
+  // Restore placeholders
+  code = code.replace(/\x00(\d+)\x00/g, (_, i) => placeholders[parseInt(i)]);
+  return code;
+}
+
+// Apply highlighting to all code blocks on load
+document.querySelectorAll('.code-block code.sql').forEach(el => {
+  const raw = el.getAttribute('data-sql') || el.textContent;
+  el.innerHTML = highlightSql(raw);
+});
+
+// ---- Boot ----
+initDb();
+</script>
+
+</body>
+</html>
