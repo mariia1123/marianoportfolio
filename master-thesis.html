@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Thesis — Mariano Cánovas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #faf8fc; --surface: #ffffff; --text: #1c1424; --text-muted: #6b6175; --border: #ece6f2; --accent: #8B5A8F; --accent-2: #6d3f72; --accent-soft: #f4eef6; --amber: #c9842b; }
+body.dark-mode { --bg: #110d15; --surface: #1a141f; --text: #f3eef7; --text-muted: #9b8fa6; --border: #2c2333; --accent: #b888bc; --accent-2: #caa0cd; --accent-soft: #221a29; --amber: #d8a25a; }
+* { box-sizing: border-box; } html { scroll-behavior: smooth; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.6; -webkit-font-smoothing: antialiased; transition: background 0.3s ease, color 0.3s ease; }
+::-webkit-scrollbar { width: 9px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::selection { background: var(--accent); color: #fff; }
+#top-controls { position: fixed; top: 20px; right: 24px; z-index: 100; display: flex; gap: 8px; }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+.nav-bar { max-width: 900px; margin: 0 auto; padding: 24px 24px 0; }
+.back-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-muted); font-size: 13px; padding: 10px 16px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); transition: all 0.2s; }
+.back-link:hover { color: var(--accent); border-color: var(--accent); }
+.page-header { max-width: 900px; margin: 0 auto; padding: 60px 24px 36px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+.page-title h1 { font-size: clamp(36px, 7vw, 54px); font-weight: 800; margin: 0 0 14px; letter-spacing: -0.03em; line-height: 1.06; }
+.page-title p { font-size: 16px; color: var(--text-muted); margin: 0; max-width: 640px; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 22px; font-size: 13px; color: var(--text-muted); }
+.meta-row span strong { color: var(--text); font-weight: 700; }
+.pdf-preview-section { max-width: 900px; margin: 0 auto 54px; padding: 0 24px; }
+.pdf-card { width: 168px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 18px rgba(139,90,143,0.10); }
+.pdf-card:hover { border-color: var(--accent); box-shadow: 0 10px 30px rgba(139,90,143,0.22); transform: translateY(-4px); }
+.pdf-thumbnail { width: 100%; height: 224px; overflow: hidden; border-bottom: 1px solid var(--border); background: #fff; }
+.pdf-thumbnail img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.pdf-info { padding: 12px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.pdf-title { font-size: 12px; font-weight: 700; color: var(--text); margin: 0; }
+.thesis-card { max-width: 900px; margin: 0 auto 70px; padding: 0 24px; }
+.card-container { background: var(--surface); border-radius: 18px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 6px 24px rgba(139,90,143,0.10); transition: all 0.3s; }
+.card-container:hover { border-color: var(--accent); box-shadow: 0 10px 36px rgba(139,90,143,0.16); }
+.card-header { background: linear-gradient(135deg, #8B5A8F 0%, #5d3463 100%); color: white; padding: 48px 40px; position: relative; overflow: hidden; }
+.card-header::before { content: ''; position: absolute; top: -55%; right: -25%; width: 320px; height: 320px; background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, transparent 70%); border-radius: 50%; }
+.card-logo { position: absolute; top: 22px; right: 24px; z-index: 2; background: rgba(255,255,255,0.95); padding: 7px 13px; border-radius: 8px; font-size: 11px; font-weight: 800; color: var(--accent-2); letter-spacing: 0.02em; }
+.card-badge { display: inline-block; background: rgba(255,255,255,0.18); color: white; padding: 6px 13px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 18px; position: relative; z-index: 2; }
+.card-title { font-size: 30px; font-weight: 800; margin: 0 0 10px; position: relative; z-index: 2; letter-spacing: -0.02em; }
+.card-subtitle { font-size: 15px; color: rgba(255,255,255,0.92); margin: 0; position: relative; z-index: 2; max-width: 560px; }
+.card-body { padding: 36px 40px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+.highlight-box { background: var(--accent-soft); padding: 20px; border-radius: 12px; border-left: 4px solid var(--accent); }
+.highlight-label { font-size: 11px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.highlight-value { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.15; }
+.highlight-desc { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; }
+.content { max-width: 900px; margin: 0 auto; padding: 0 24px 100px; }
+.section { margin-bottom: 64px; }
+.section-num { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+.section-title { font-size: 28px; font-weight: 800; margin: 0 0 22px; letter-spacing: -0.02em; }
+.narrative { font-size: 15.5px; line-height: 1.8; margin-bottom: 22px; }
+.narrative p { margin: 0 0 16px; }
+.narrative strong { color: var(--accent-2); font-weight: 700; }
+.callout { background: linear-gradient(135deg, var(--accent-soft) 0%, transparent 100%); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 12px; padding: 26px 28px; margin: 28px 0; }
+.callout-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.callout-text { font-size: 17px; line-height: 1.6; font-weight: 500; }
+.callout-text strong { color: var(--accent-2); font-weight: 800; }
+.results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+.result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: all 0.3s; }
+.result-card:hover { border-color: var(--accent); box-shadow: 0 8px 24px rgba(139,90,143,0.12); }
+.result-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 8px; }
+.result-value { font-size: 26px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+.result-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.key-findings { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 8px; padding: 26px 28px; margin: 24px 0; }
+.findings-title { font-size: 12px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+.findings-list { list-style: none; padding: 0; margin: 0; }
+.findings-list li { margin: 13px 0; padding-left: 26px; position: relative; color: var(--text); font-size: 14.5px; line-height: 1.55; }
+.findings-list li::before { content: '→'; position: absolute; left: 0; color: var(--accent); font-weight: 800; }
+.cost-table { width: 100%; border-collapse: collapse; margin: 8px 0 6px; font-size: 14.5px; background: var(--surface); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(139,90,143,0.08); }
+.cost-table th, .cost-table td { padding: 13px 16px; text-align: center; border-bottom: 1px solid var(--border); }
+.cost-table thead th { background: var(--accent-soft); color: var(--accent-2); font-weight: 700; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+.cost-table tbody th { text-align: left; font-weight: 700; color: var(--text); }
+.cost-table td.best { color: var(--accent); font-weight: 800; }
+.cost-table tr:last-child td, .cost-table tr:last-child th { border-bottom: none; }
+.table-caption { font-size: 12.5px; color: var(--text-muted); margin: 0 0 28px; font-style: italic; }
+.chart-highlight { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 30px 24px; margin: 24px 0; text-align: center; box-shadow: 0 4px 16px rgba(139,90,143,0.08); }
+.chart-title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0 0 22px; text-transform: uppercase; letter-spacing: 0.06em; }
+.pdf-modal { display: none; position: fixed; inset: 0; background: rgba(28,20,36,0.55); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+.pdf-modal.active { display: flex; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.pdf-modal-content { background: var(--surface); border-radius: 16px; width: 90%; height: 90vh; max-width: 1000px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s ease; position: relative; display: flex; flex-direction: column; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 17px; font-weight: 800; margin: 0; }
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); padding: 0; width: 32px; height: 32px; }
+.modal-close:hover { color: var(--text); }
+.pdf-embed { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+footer { max-width: 900px; margin: 0 auto; padding: 28px 24px; border-top: 1px solid var(--border); text-align: center; font-size: 13px; color: var(--text-muted); }
+footer a { color: var(--accent); text-decoration: none; font-weight: 700; }
+@media (max-width: 768px) {
+  .page-header { padding: 44px 20px 28px; }
+  .nav-bar { padding: 20px 20px 0; }
+  .card-body { grid-template-columns: 1fr; }
+  .results-grid { grid-template-columns: 1fr; }
+  .card-logo { top: 16px; right: 16px; }
+  .pdf-modal-content { width: 95%; height: 95vh; }
+  .cost-table { font-size: 13px; } .cost-table th, .cost-table td { padding: 10px 8px; }
+}
+</style>
+</head>
+<body>
+<div id="top-controls">
+  <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg id="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <svg id="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</div>
+<nav class="nav-bar">
+  <a href="index.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to home
+  </a>
+</nav>
+<header class="page-header">
+  <div class="eyebrow">MSc Supply Chain Management · RSM, Erasmus University</div>
+  <div class="page-title">
+    <h1>Bridging Forecasting &amp; Inventory Control</h1>
+    <p>Under intermittent demand: a comparison of classical and neural ordering policies, asking whether better forecasts or better policies drive lower cost.</p>
+  </div>
+  <div class="meta-row">
+    <span><strong>Mariano Cánovas Martínez</strong></span>
+    <span><strong>15 June 2026</strong></span>
+  </div>
+</header>
+<div class="pdf-preview-section">
+  <div class="pdf-card" onclick="openPdfModal(event)">
+    <div class="pdf-thumbnail">
+      <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/2wBDAQYGBgkICREJCREkGBQYJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCT/wAARCAGiAWgDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAQGAQMFBwII/8QAORAAAQQBAwIDBAoDAQACAwEAAQACAwQRBRIhBjETQVEUFSJhByMyVFVxkZSj0UJSgRYzYkNF8aH/xAAXAQEBAQEAAAAAAAAAAAAAAAAAAgED/8QAHREBAQACAgMBAAAAAAAAAAAAAAECERJREzGhA//aAAwDAQACEQMRAD8A/VKIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiLi9Za3Z6e6dt6jUiZLPF4YYx7S4EukazsCCftdgeVsm7plupt2kXlcv0sarBTbZmraXGX6dPPDEXOL5rDPFwxwDt0I+raSHA93DcC3BsXSXXljXbGr+86DdKr0I4JGmclrzuDxIXA9gJI3tB8w3PmFd/LKTdRP0xt0uSLlVtVvXZWPg0qRtRxH1s8gjeR/sI8E4/PB+S6q52OgiIgIiICJlMoCJlEBETKAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAvmSNkrS2RrXNPk4ZC+kQcCzbqS3poNN0mG/cizFNJhjI4i7Di17yCcnIJaATzyua/T9T1vqF1bULsVeOlFFZLKcQy97nPDA5zwdwbtJHA5OfJW1leGKR8jImNfIQXua0AuPzPmod/RK96yy0JbFayxvh+NXkLHOZnO0+RGeeRx5K5lImxCv6fqtSg9mm3rliaR7AHSujLoh/kRloB/IqLqEPU9h0lVz6batycRB0O7xIIMHcSe24gYzxgnjPGLBUpRUmFse9xccufI8vc4+pJW9ZMtN0rVaj1NUggirv0avBCyNortbIQA3gtDjyA4Y5wduMYPdfLZdXn0nWbGoODInRu9nYGbCwAHJGQHY7fa5JBOACArOtVqtHcrS15cmOVpY7BwcFORpTOodBZqHVktmr1H7BqApsZ4ABG2PceS4EEbjxwR5kcgERj0fqMbvFi65sMe5zXPkMh+Nu4E8b9oyQ4cD0H+2bNqPR+l6rqjtRstldK5sTXN3fA7w3FzDjHcE5/8A4uRX+ibpmuwMMFiVgAG2WXcCcvOTxyfrHc/NdJnNe/jncb0gT9F60+eKaDridsnhtjZI8lziS5jnYG/HJZxxnDiOQAss0A2tN1GpN1g7UG264btsSOLWHdkOADgcZZJwO/bkDC61X6NtDp3K9qEW2urSsmhb43wxluewxwDnkefbtwsz/RvoNlznTx2ZTk+GXTE+C0u3bWf6gHOPP4jynOd/DhevrmN6T1B/gzjrGSOSNrzDNF8I2O2Hlm7ZtAaQAAByCeeV81NBvM1Omy11oLJjkjlFVzid+1+7YMvJIGDycuz3JHCnv+inpeSdszqkpcC44MpIIdj4cHsBt4A9T6r4ufRZodivPHF48MkpkxIHZ8IPLi7YOA37RIx2IB8uXOd/DjevrEfQ1+ybct7qGxcM9WzXhJ3YiEwaN4+Lvhp7YAz8OOcx4fo81mpKGVer9QZVc5z5WkHxZC4MBy4OwMBmBgDGfmVeIII60EcELAyONoYxo7NAGAF9qPJkrhFAn6N6xZYi8Hq6eWN0zN5dlngxhoBcBk73HHY/CSSSM8rfF0L1E2KPd1tqXjsZs3jJbnAGdpOCftd/UegV4RPJTxxT6HRWsV7FGxa6ovWzWkjkfG9ztkm0AY4d83nnOcjOcK4Iim5W+1SSehERY0REQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBaLuoVNNh8e7agqxZDfEmkDG59Mk4W9Vv6Rq8NrorVop4I543QEOjkaHBwyAQQfllBYWzxPhE7ZGOiLd4eHAtLcZzntjHmtVHUaWpxGajbr2owdpfDI14B9MgnleV9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D97sgkkkg54yXO/UrqIg5lbprSqk7J4abWyxnc125xLT8XbJ/wDu79V00RAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERARx2gnnj0REED3xF91v/ALV/9J74i+63/wBq/wDpT8D0TAQQPfEX3W/+1f8A0nviL7rf/av/AKU/ATAQQPfEX3W/+1f/AEnviL7rf/av/pT8BMBBA98Rfdb/AO1f/Se+Ivut/wDav/pT8BMBBA98Rfdb/wC1f/Se+Ivut/8Aav8A6U/ATAQQPfEX3W/+1f8A0nviL7rf/av/AKU/ATAQQPfEX3W/+1f/AEnviL7rf/av/pT8BMBBA98Rfdb/AO1f/Se+Ivut/wDav/pT8BMBBA98Rfdb/wC1f/Se+Ivut/8Aav8A6U/ATAQQPfEX3W/+1f8A0nviL7rf/av/AKU/ATAQQPfEX3W/+1f/AEnviL7rf/av/pT8BMBBA98Rfdb/AO1f/Se+Ivut/wDav/pT8BMBBA98Rfdb/wC1f/Se+Ivut/8Aav8A6U/ATAQQPfEX3W/+1f8A0nviL7rf/av/AKU/ATAQRa+ossSiNsFphPOZIHNH6kKUmEQEREBERAREQEREBERAQkAZJwEUbUww6daEoaYzC/cHYxjac5z5IJDXtd9lwOOOCsryKhqPuHTdDv0HU2Ts6YkmDYB8DnMjifusgEZHG1p7gud3yrXc167p2uuruNOeWZlJhmja4CFkssw3OG4ggBrQDxlzhk4wAFyBDhkEEfJF53p3UVrTIIqFB+m4nu3S1z5GtaXC8WuDQXDGGOc7zyQB585d1df01tlsT9O+r96yyZDvjfXe0tPLzjO47h+mOyD0NYL2t4Lmj8yqrp/U17UuovYIzRjgaS5zfFDpNnhRvaQN2fiL3jtwGg+fPO1ejHf+kd0Aqada8TSYhMy00OJj9oIcQMd9ue/yQXxF58esr1HRqTq8VaHdCT4UwJ9lDJ4ogyQ5ByWvIzx8TTwQpepdXa1p0OqSCpWnfpsnhOYcsMzfBD/FaMk43O7c/C13OQgu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" alt="Master thesis front page">
+    </div>
+    <div class="pdf-info">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--accent)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <div class="pdf-title">View PDF</div>
+    </div>
+  </div>
+</div>
+<div class="thesis-card">
+  <div class="card-container">
+    <div class="card-header">
+      <span class="card-logo">VN2 Challenge</span>
+      <span class="card-badge">Headline Result</span>
+      <h2 class="card-title">The policy matters more than the forecast</h2>
+      <p class="card-subtitle">For intermittent retail demand, how a forecast is converted into an order matters more for cost than how the forecast itself is produced.</p>
+    </div>
+    <div class="card-body">
+      <div class="highlight-box">
+        <div class="highlight-label">Forecaster Effect</div>
+        <div class="highlight-value">~2%</div>
+        <div class="highlight-desc">Cost cut from the more accurate forecaster under a fixed base-stock policy</div>
+      </div>
+      <div class="highlight-box">
+        <div class="highlight-label">Policy Effect</div>
+        <div class="highlight-value">~9%</div>
+        <div class="highlight-desc">Cost cut from the learned FFNN policy on the LightGBM forecast (11–13% across rolling windows)</div>
+      </div>
+      <div class="highlight-box">
+        <div class="highlight-label">Lowest Cost</div>
+        <div class="highlight-value">4,707</div>
+        <div class="highlight-desc">LightGBM + learned policy, down from 5,298 for the classical baseline</div>
+      </div>
+    </div>
+  </div>
+</div>
+<main class="content">
+
+  <section class="section">
+    <div class="section-num">The Problem</div>
+    <h2 class="section-title">Forecasts don't reduce cost — decisions do</h2>
+    <div class="narrative">
+      <p>Intermittent demand is characterized by randomness, frequent zero observations, and irregular spikes, a pattern found in slow-moving consumer goods, spare parts, and industrial maintenance products. <strong>Poor inventory control in such contexts can create serious cost implications</strong>, since overstocking ties up capital and raises obsolescence risk, while understocking results in stockouts and lost sales. Inventory policies rely on demand estimates, so demand forecasting plays a crucial role.</p>
+      <p>Yet prior research shows that <strong>improvements in forecast accuracy do not always translate into better inventory performance</strong>, and this disconnect can also appear under intermittent demand. What matters is not the forecast itself but the ordering decision it informs. This thesis therefore evaluates Croston-based and LightGBM-based forecasts not by accuracy alone but by the holding and shortage costs of the decisions they drive within a simulation framework.</p>
+      <p>The guiding question: <strong>how do different ways of forecasting intermittent demand translate into inventory costs, and does the benefit of a more sophisticated forecast depend on the policy that acts on it?</strong></p>
+    </div>
+    <div class="callout">
+      <div class="callout-label">Central contribution</div>
+      <div class="callout-text">To <strong>separate the forecaster effect from the policy effect</strong> on the same data, under one cost objective, instead of studying forecasting and ordering apart, and to provide one of the few tests of a learned neural policy on explicitly intermittent demand, showing that its cost advantage is largest there.</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-num">The Setup</div>
+    <h2 class="section-title">A 2 × 2 design on the VN2 Challenge</h2>
+    <div class="narrative">
+      <p>Using the <strong>VN2 Inventory Planning Challenge</strong> dataset (Vandeput, 2025), which recreates a real retail replenishment setting with weekly orders and a two-week lead time, this thesis pairs two forecasters with two ordering policies and tests all four combinations under a common cost objective. A classical <strong>Croston (SBA)</strong> forecaster and a modern <strong>LightGBM</strong> forecaster are each fed into a classical <strong>base-stock</strong> benchmark and a <strong>feed-forward neural network (FFNN)</strong> policy trained directly on simulated inventory cost via hindsight differentiable policy optimization.</p>
+      <p>Evaluating both forecaster and policy on the same data isolates and quantifies the contribution of each to total inventory cost. Orders are placed in each of the first six weeks; because of the two-week lead time, the simulation runs eight weeks so orders from weeks 5 and 6 can arrive and have their costs counted. The objective is to minimise total holding plus shortage cost, where a stockout ($1.00/unit) is <strong>five times</strong> more costly than holding ($0.20/unit/week).</p>
+    </div>
+    <div class="results-grid">
+      <div class="result-card"><div class="result-label">Series</div><div class="result-value">599 SKUs</div><div class="result-desc">67 stores × 297 products, ~165 weeks of history</div></div>
+      <div class="result-card"><div class="result-label">Cost Asymmetry</div><div class="result-value">5 : 1</div><div class="result-desc">Shortage $1.00 vs holding $0.20 per unit</div></div>
+      <div class="result-card"><div class="result-label">Lead Time</div><div class="result-value">2 Weeks</div><div class="result-desc">Fixed; in-transit stock incurs no holding cost</div></div>
+      <div class="result-card"><div class="result-label">Sparsity</div><div class="result-value">85% Sparse</div><div class="result-desc">Intermittent or lumpy; the median SKU shows zero demand in 46.5% of weeks</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-num">Key Decisions</div>
+    <h2 class="section-title">How the four methods were built</h2>
+    <div class="narrative">
+      <p>A core data problem shapes everything. While the VN2 dataset flags whether a product was in stock (FALSE in roughly 11% of observations), it does not record how much demand was lost during those stockouts. Demand is never observed directly; only sales are observed, and <strong>sales and lost demand are not independent, they are two parts of the same quantity separated by the stockout</strong>. Since the lost quantity cannot be recovered, this thesis makes no attempt to reconstruct it. Instead, stockout weeks are masked from the LightGBM target, and the resulting downward bias is accepted as an inherent limitation of the data rather than corrected through ad hoc reconstruction.</p>
+      <p>The neural policy is deliberately framed to be comparable to the classical rule. The base-stock order <em>max(0, S − IP)</em> has exactly the structure of a <strong>ReLU activation</strong>, so the base-stock rule is a constrained special case of the neural policy within the same piecewise-linear function class, meaning the network can, in principle, replicate it exactly. <strong>Any performance difference therefore stems from the additional flexibility that the neural policy provides.</strong></p>
+    </div>
+    <div class="key-findings">
+      <div class="findings-title">The four combinations tested</div>
+      <ul class="findings-list">
+        <li>Croston (SBA) + Base-stock &mdash; the fully classical reference point</li>
+        <li>Croston (SBA) + FFNN &mdash; classical forecast, learned policy</li>
+        <li>LightGBM + Base-stock &mdash; modern forecast, classical policy</li>
+        <li>LightGBM + FFNN &mdash; modern forecast, learned policy (cheapest overall)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-num">Result 1</div>
+    <h2 class="section-title">LightGBM forecasts better — but only just</h2>
+    <div class="narrative">
+      <p>Measured by MASE on the test window, <strong>LightGBM wins in every cell of the table</strong>, at both horizons and in all four demand classes. Pooled over all series, it lowers MASE from 1.071 to 1.003 at t+1 and from 1.006 to 0.957 at t+2, improving around 6% and 5%. The difference is largest on the lumpy and intermittent classes, which together make up 512 of the 599 series, because LightGBM can read calendar covariates and learn across series while Croston cannot capture the year-end spike or the mild trend.</p>
+      <p>But the more telling observation is <strong>how close most values are to one</strong>, the naive benchmark, especially in the dominant intermittent and lumpy classes. This indicates that both forecasters improve only a bit on the naive benchmark, so there is little accuracy signal to pass into cost. In short, LightGBM is the more accurate forecaster here, but only by a small margin.</p>
+    </div>
+    <div class="chart-highlight">
+      <div class="chart-title">Forecast Accuracy (MASE, t+1) by demand class — lower is better, 1.0 = naive benchmark</div>
+      <svg viewBox="0 0 520 300" style="max-width:100%;height:auto;">
+        <line x1="60" y1="250" x2="500" y2="250" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+        <line x1="60" y1="130" x2="500" y2="130" stroke="#c9842b" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <text x="500" y="125" text-anchor="end" font-size="11" fill="#c9842b" font-weight="700">naive = 1.0</text>
+        <text x="52" y="253" text-anchor="end" font-size="10" fill="currentColor" opacity="0.6">0.80</text>
+        <text x="52" y="193" text-anchor="end" font-size="10" fill="currentColor" opacity="0.6">0.90</text>
+        <text x="52" y="133" text-anchor="end" font-size="10" fill="currentColor" opacity="0.6">1.00</text>
+        <text x="52" y="73" text-anchor="end" font-size="10" fill="currentColor" opacity="0.6">1.10</text>
+        <rect x="80" y="70.6" width="28" height="179.4" fill="#b89bbb" rx="2"/>
+        <rect x="112" y="104.8" width="28" height="145.2" fill="#8B5A8F" rx="2"/>
+        <text x="110" y="268" text-anchor="middle" font-size="10.5" fill="currentColor">Intermittent</text>
+        <rect x="185" y="81.4" width="28" height="168.6" fill="#b89bbb" rx="2"/>
+        <rect x="217" y="137.2" width="28" height="112.8" fill="#8B5A8F" rx="2"/>
+        <text x="215" y="268" text-anchor="middle" font-size="10.5" fill="currentColor">Lumpy</text>
+        <rect x="290" y="154" width="28" height="96" fill="#b89bbb" rx="2"/>
+        <rect x="322" y="191.8" width="28" height="58.2" fill="#8B5A8F" rx="2"/>
+        <text x="320" y="268" text-anchor="middle" font-size="10.5" fill="currentColor">Smooth</text>
+        <rect x="395" y="180.4" width="28" height="69.6" fill="#b89bbb" rx="2"/>
+        <rect x="427" y="220.6" width="28" height="29.4" fill="#8B5A8F" rx="2"/>
+        <text x="425" y="268" text-anchor="middle" font-size="10.5" fill="currentColor">Erratic</text>
+        <rect x="150" y="288" width="11" height="11" fill="#b89bbb" rx="2"/><text x="166" y="297" font-size="11" fill="currentColor">Croston (SBA)</text>
+        <rect x="290" y="288" width="11" height="11" fill="#8B5A8F" rx="2"/><text x="306" y="297" font-size="11" fill="currentColor">LightGBM</text>
+      </svg>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-num">Result 2</div>
+    <h2 class="section-title">Accuracy barely carries through to cost</h2>
+    <div class="narrative">
+      <p>This is the heart of the thesis. Reading the cost table <strong>down each column</strong> isolates the policy effect; reading <strong>across each row</strong> isolates the forecaster effect. Under base-stock, swapping Croston for LightGBM lowers cost from 5,298 to 5,197, about 2%, even though Table 7 shows a 6% gain in pooled MASE. Keeping the forecaster fixed and replacing base-stock with the learned policy cuts cost from 5,197 to 4,707 on LightGBM, about 9%. On Croston the gain is small, because <strong>a flat demand rate leaves the network a limited structure to work with</strong>.</p>
+    </div>
+    <table class="cost-table">
+      <thead><tr><th>Total cost (8 weeks)</th><th>Base-stock</th><th>FFNN (learned)</th></tr></thead>
+      <tbody>
+        <tr><th>Croston (SBA)</th><td>5,298</td><td>5,227</td></tr>
+        <tr><th>LightGBM</th><td>5,197</td><td class="best">4,707</td></tr>
+      </tbody>
+    </table>
+    <p class="table-caption">FFNN values are the median across five random seeds (spread 62 and 78). The lowest cost, 4,707, comes from pairing the stronger forecaster with the learned policy; the distance from there to the classical Croston baseline of 5,298 owes far more to the policy than to the forecaster.</p>
+    <div class="callout">
+      <div class="callout-label">The core finding</div>
+      <div class="callout-text">Forecast accuracy and inventory performance <strong>move together but are not the same thing</strong>. A ~6% accuracy gain became only a ~2% base-stock cost cut, while changing the ordering rule delivered ~9%. On its own, the forecaster matters less than the policy.</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-num">Result 3</div>
+    <h2 class="section-title">The ranking is robust</h2>
+    <div class="narrative">
+      <p>The results above rest on a single 8-week horizon. Re-running every combination on <strong>six rolling test windows</strong> leaves the pattern the same: the learned policy lowers cost under both forecasters, again more so with LightGBM (6,624 to 5,735, about 13%) than with Croston (6,718 to 6,002, about 11%), and the cheapest combination is still LightGBM with the FFNN. Across <strong>five random seeds</strong>, seed variation is small (CV = 0.010 for Croston, 0.012 for LightGBM), far below the gap of more than 600 cost units between the learned policy and base-stock, so every seed outperforms the benchmark. Re-running without masking stockout weeks leaves the ranking intact as well.</p>
+    </div>
+    <div class="results-grid">
+      <div class="result-card"><div class="result-label">Rolling windows · LightGBM</div><div class="result-value">~13%</div><div class="result-desc">FFNN cuts mean cost 6,624 → 5,735</div></div>
+      <div class="result-card"><div class="result-label">Rolling windows · Croston</div><div class="result-value">~11%</div><div class="result-desc">FFNN cuts mean cost 6,718 → 6,002</div></div>
+      <div class="result-card"><div class="result-label">Seed stability</div><div class="result-value">CV ≈ 0.01</div><div class="result-desc">Every seed outperforms base-stock</div></div>
+      <div class="result-card"><div class="result-label">Why the policy wins</div><div class="result-value">More state</div><div class="result-desc">The FFNN sees on-hand, both in-transit, and both forecasts separately — not one collapsed number</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-num">Why It Wins</div>
+    <h2 class="section-title">It's about timing, not holding less</h2>
+    <div class="narrative">
+      <p>A single illustrative series (Store 61, Product 48) makes the mechanism concrete. Both policies hold a similar amount of inventory on average, so the difference is not that one carries less inventory, <strong>it is about timing</strong>. While base-stock lets its inventory fall to zero across Weeks 160 and 161, losing sales, the learned policy keeps stock available through those weeks. The cumulative cost gap begins with the stockouts and persists until the end of the evaluation horizon.</p>
+      <p>The learned policy wins because it has more state and more flexibility than base-stock. Base-stock is a special case it can replicate, and the network sees more: it observes <strong>on-hand inventory, both in-transit quantities, and both forecasts separately</strong>, and maps them to an order non-linearly. This is why the policy helped more on LightGBM than on Croston, the policy pays off most when the forecast carries real week-to-week information.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-num">Honest Limits</div>
+    <h2 class="section-title">What qualifies these findings</h2>
+    <div class="narrative">
+      <p>The aim was not to win the competition but to separate the effects of the forecaster and the policy, ensuring a fair comparison. The leading entries reached about €3,763, compared to the competition benchmark of €4,334 that only around 15% of participants beat; the best result here was €4,707, and the costs were not meant to be the best possible.</p>
+    </div>
+    <div class="key-findings">
+      <div class="findings-title">Limitations</div>
+      <ul class="findings-list">
+        <li><strong>Censored demand:</strong> the VN2 data does not show how much demand was lost, so every forecaster was fitted on a censored series, underestimating true demand; the bias is accepted, not corrected</li>
+        <li><strong>Deliberate simplicity:</strong> a default squared-error loss, hand-set hyperparameters, and a shallow two-layer FFNN, all kept simple for a fair comparison rather than peak accuracy</li>
+        <li><strong>A forecasting ceiling:</strong> on the intermittent and lumpy classes both forecasters stayed close to the naive benchmark, part of why the policy effect looks larger than the forecaster effect</li>
+        <li><strong>Generalisation:</strong> the finding may depend on the VN2 cost ratio, which heavily rewards avoiding stockouts; other ratios, lead times, or backorder rules would need further testing</li>
+        <li><strong>Transparency:</strong> the learned policy needs a differentiable simulator and gives no readable ordering rule, so its small saving may not always justify the added complexity</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-num">In Practice</div>
+    <h2 class="section-title">What this means for planners</h2>
+    <div class="narrative">
+      <p>For intermittent retail demand, the practical takeaway is direct: <strong>planners facing intermittent demand may gain more by improving the rule that turns forecasts into orders than by chasing forecast accuracy alone</strong>, especially when stockouts are costly. Future work points to generating synthetic demand for stockout weeks rather than masking them, repeating the comparison across other cost ratios and lead times, and removing the train-in-stages split by making the forecaster cost-aware or training the forecaster and policy together directly on cost.</p>
+    </div>
+  </section>
+
+</main>
+<div class="pdf-modal" id="pdfModal" onclick="closePdfModal(event)">
+  <div class="pdf-modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Master Thesis PDF</h3>
+      <button class="modal-close" onclick="closePdfModal()">&times;</button>
+    </div>
+    <iframe class="pdf-embed" src="https://drive.google.com/file/d/1x9QPSEMQiT2kDysnpOSpClbXdFFw209h/preview"></iframe>
+  </div>
+</div>
+<footer>
+  <div>Mariano Cánovas © 2026 · RSM, Erasmus University Rotterdam · <a href="mailto:787661mc@eur.nl">Get in touch</a></div>
+</footer>
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
+  try { localStorage.setItem('mariano-thesis-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  try { if (localStorage.getItem('mariano-thesis-theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('moon-icon').style.display = 'none';
+      document.getElementById('sun-icon').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+function openPdfModal(event) { event.preventDefault(); document.getElementById('pdfModal').classList.add('active'); document.body.style.overflow = 'hidden'; }
+function closePdfModal(event) { if (event && event.target.id !== 'pdfModal') return; document.getElementById('pdfModal').classList.remove('active'); document.body.style.overflow = 'auto'; }
+document.addEventListener('keydown', function(event) { if (event.key === 'Escape') closePdfModal(); });
+</script>
+</body>
+</html>
